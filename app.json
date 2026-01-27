@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Pagos_Cuotas",
+    "slug": "Pagos_Cuotas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.estebanorjuela.controlaportes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -25,6 +26,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d601242c-15fd-44b0-9b8b-828b8e15398f"
+      }
     }
   }
 }
