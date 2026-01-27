@@ -2,6 +2,7 @@ export interface Person {
     id: string;
     name: string;
     email: string;
+    phone?: string; // WhatsApp number
     createdAt: string;
 }
 
@@ -20,4 +21,5 @@ export type RootStackParamList = {
     RegisterPerson: undefined;
     NewPayment: undefined;
     MemberDetails: { personId: string };
+    EditMember: { personId: string };
 };

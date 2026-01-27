@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, FlatList, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, FlatList, Alert, ScrollView, Linking } from 'react-native';
 import SignatureScreen, { SignatureViewRef } from 'react-native-signature-canvas';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronDown, Calendar, Search } from 'lucide-react-native';
@@ -55,6 +55,26 @@ export default function NewPayment() {
         setScrollEnabled(true);
     };
 
+    const sendWhatsAppNotification = (person: Person, amount: string, date: string) => {
+        if (!person.phone) return;
+
+        // Clean phone number (remove non-digits)
+        const cleanPhone = person.phone.replace(/\D/g, '');
+        const fullPhone = cleanPhone.startsWith('57') ? cleanPhone : `57${cleanPhone}`;
+
+        const message = `⛪ *Control de Aportes*\n_Restauración Poder y Vida_\n\n¡Hola *${person.name}*! 😊\n\nQueremos confirmarte que hemos recibido tu aporte:\n\n💰 *Monto:* $${amount}\n📅 *Fecha:* ${date}\n\n¡Muchas gracias por tu generosidad! 🙏✨\nQue Dios te bendiga abundantemente.`;
+
+        const url = `whatsapp://send?phone=${fullPhone}&text=${encodeURIComponent(message)}`;
+
+        Linking.canOpenURL(url).then(supported => {
+            if (supported) {
+                Linking.openURL(url);
+            } else {
+                Alert.alert("Error", "WhatsApp no está instalado en este dispositivo.");
+            }
+        });
+    };
+
     // Called after readSignature triggers onOK
     const onSave = async (signatureBase64: string) => {
         if (!selectedPerson || !amount || !signatureBase64) {
@@ -75,7 +95,15 @@ export default function NewPayment() {
                 year: dateObj.getFullYear(),
                 signatureBase64: signatureBase64
             });
+
             Alert.alert("Éxito", "Pago registrado.", [
+                {
+                    text: "Enviar WhatsApp",
+                    onPress: () => {
+                        sendWhatsAppNotification(selectedPerson, amount, date);
+                        navigation.goBack();
+                    }
+                },
                 { text: "OK", onPress: () => navigation.goBack() }
             ]);
         } catch (e) {

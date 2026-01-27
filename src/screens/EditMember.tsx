@@ -1,17 +1,41 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { User } from 'lucide-react-native';
-import { savePerson } from '../utils/storage';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { getPersonById, updatePerson } from '../utils/storage';
 import { theme } from '../styles/theme';
-import { Person } from '../types';
+import { Person, RootStackParamList } from '../types';
 
-export default function RegisterPerson() {
+type EditMemberRouteProp = RouteProp<RootStackParamList, 'EditMember'>;
+
+export default function EditMember() {
     const navigation = useNavigation();
+    const route = useRoute<EditMemberRouteProp>();
+    const { personId } = route.params;
+
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [originalPerson, setOriginalPerson] = useState<Person | null>(null);
+
+    useEffect(() => {
+        loadPerson();
+    }, [personId]);
+
+    const loadPerson = async () => {
+        const person = await getPersonById(personId);
+        if (person) {
+            setOriginalPerson(person);
+            setName(person.name);
+            setEmail(person.email);
+            setPhone(person.phone || '');
+        } else {
+            Alert.alert("Error", "No se encontró el miembro.");
+            navigation.goBack();
+        }
+        setLoading(false);
+    };
 
     const handleSave = async () => {
         if (!name.trim()) {
@@ -19,26 +43,35 @@ export default function RegisterPerson() {
             return;
         }
 
-        setLoading(true);
-        const newPerson: Person = {
-            id: Date.now().toString(),
+        if (!originalPerson) return;
+
+        setSaving(true);
+        const updatedPerson: Person = {
+            ...originalPerson,
             name: name.trim(),
             email: email.trim(),
             phone: phone.trim(),
-            createdAt: new Date().toISOString(),
         };
 
         try {
-            await savePerson(newPerson);
-            Alert.alert('Éxito', 'Miembro registrado correctamente.', [
+            await updatePerson(updatedPerson);
+            Alert.alert('Éxito', 'Información actualizada.', [
                 { text: 'OK', onPress: () => navigation.goBack() }
             ]);
         } catch (e) {
-            Alert.alert('Error', 'No se pudo guardar el miembro.');
+            Alert.alert('Error', 'No se pudo actualizar el miembro.');
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+        );
+    }
 
     return (
         <KeyboardAvoidingView
@@ -46,8 +79,8 @@ export default function RegisterPerson() {
             style={styles.container}
         >
             <View style={styles.header}>
-                <Text style={styles.title}>Registrar Miembro</Text>
-                <Text style={styles.subtitle}>Añade un nuevo miembro a la comunidad</Text>
+                <Text style={styles.title}>Editar Miembro</Text>
+                <Text style={styles.subtitle}>Modifica los datos del miembro</Text>
             </View>
 
             <View style={styles.formContainer}>
@@ -88,11 +121,11 @@ export default function RegisterPerson() {
                 </View>
 
                 <TouchableOpacity
-                    style={[styles.button, loading && styles.buttonDisabled]}
+                    style={[styles.button, saving && styles.buttonDisabled]}
                     onPress={handleSave}
-                    disabled={loading}
+                    disabled={saving}
                 >
-                    <Text style={styles.buttonText}>{loading ? 'Guardando...' : 'Guardar Miembro'}</Text>
+                    <Text style={styles.buttonText}>{saving ? 'Guardando...' : 'Guardar Cambios'}</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
@@ -105,6 +138,11 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.background,
         padding: 20,
         justifyContent: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     header: {
         marginBottom: 40,

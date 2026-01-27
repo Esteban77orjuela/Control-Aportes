@@ -29,6 +29,17 @@ export const savePerson = async (person: Person): Promise<void> => {
     }
 };
 
+export const updatePerson = async (updatedPerson: Person): Promise<void> => {
+    try {
+        const people = await getPeople();
+        const updatedPeople = people.map(p => p.id === updatedPerson.id ? updatedPerson : p);
+        await AsyncStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(updatedPeople));
+    } catch (e) {
+        console.error('Error updating person', e);
+        throw e;
+    }
+};
+
 export const getPersonById = async (id: string): Promise<Person | undefined> => {
     const people = await getPeople();
     return people.find(p => p.id === id);
@@ -62,25 +73,44 @@ export const getPaymentsByPerson = async (personId: string): Promise<Payment[]> 
     return payments.filter(p => p.personId === personId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-// --- Dashboard Aggregates ---
+// --- Deletions ---
+
+export const deletePerson = async (id: string): Promise<void> => {
+    try {
+        const people = await getPeople();
+        const payments = await getPayments();
+
+        // Remove person and their payments
+        const updatedPeople = people.filter(p => p.id !== id);
+        const updatedPayments = payments.filter(p => p.personId !== id);
+
+        await AsyncStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(updatedPeople));
+        await AsyncStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(updatedPayments));
+    } catch (e) {
+        console.error('Error deleting person', e);
+        throw e;
+    }
+};
+
+// --- Dashboard Aggregates (Optimized) ---
 
 export const getDashboardStats = async () => {
-    const people = await getPeople();
-    const payments = await getPayments();
+    const [people, payments] = await Promise.all([getPeople(), getPayments()]);
 
     const totalMembers = people.length;
     const totalTransactions = payments.length;
     const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
 
-    // Sort people by total contribution
-    const peopleStats = people.map(person => {
-        const personPayments = payments.filter(p => p.personId === person.id);
-        const totalContributed = personPayments.reduce((sum, p) => sum + p.amount, 0);
-        return {
-            ...person,
-            totalContributed
-        };
-    }).sort((a, b) => b.totalContributed - a.totalContributed);
+    // Efficiently calculate contributions using a Map
+    const contributionsMap = payments.reduce((acc, p) => {
+        acc[p.personId] = (acc[p.personId] || 0) + p.amount;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const peopleStats = people.map(person => ({
+        ...person,
+        totalContributed: contributionsMap[person.id] || 0
+    })).sort((a, b) => b.totalContributed - a.totalContributed);
 
     return {
         totalMembers,

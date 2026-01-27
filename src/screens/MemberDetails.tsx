@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, FlatList, Image, ActivityIndicator } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, FlatList, Image, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BarChart } from 'react-native-chart-kit';
-import { getPersonById, getPaymentsByPerson } from '../utils/storage';
+import { Trash2, Edit2 } from 'lucide-react-native';
+import { getPersonById, getPaymentsByPerson, deletePerson } from '../utils/storage';
 import { Person, Payment, RootStackParamList } from '../types';
 import { theme } from '../styles/theme';
 
 type MemberDetailsRouteProp = RouteProp<RootStackParamList, 'MemberDetails'>;
+type MemberDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MemberDetails'>;
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -14,6 +17,7 @@ const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "
 
 export default function MemberDetails() {
     const route = useRoute<MemberDetailsRouteProp>();
+    const navigation = useNavigation<MemberDetailsNavigationProp>();
     const { personId } = route.params;
 
     const [person, setPerson] = useState<Person | undefined>(undefined);
@@ -22,7 +26,11 @@ export default function MemberDetails() {
 
     useEffect(() => {
         loadData();
-    }, [personId]);
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadData();
+        });
+        return unsubscribe;
+    }, [personId, navigation]);
 
     const loadData = async () => {
         setLoading(true);
@@ -31,6 +39,28 @@ export default function MemberDetails() {
         setPerson(p);
         setPayments(pays);
         setLoading(false);
+    };
+
+    const handleDelete = () => {
+        Alert.alert(
+            "Eliminar Miembro",
+            "¿Estás seguro de que deseas eliminar a este miembro? Esta acción también borrará todos sus pagos registrados y no se puede deshacer.",
+            [
+                { text: "Cancelar", style: "cancel" },
+                {
+                    text: "Eliminar",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deletePerson(personId);
+                            navigation.goBack();
+                        } catch (e) {
+                            Alert.alert("Error", "No se pudo eliminar el miembro.");
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const renderStatusGrid = () => {
@@ -114,6 +144,12 @@ export default function MemberDetails() {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
+                <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('EditMember', { personId })}>
+                    <Edit2 size={24} color={theme.colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+                    <Trash2 size={24} color={theme.colors.error} />
+                </TouchableOpacity>
                 <View style={styles.avatarLarge}>
                     <Text style={styles.avatarTextLarge}>{person.name.charAt(0).toUpperCase()}</Text>
                 </View>
@@ -181,6 +217,19 @@ const styles = StyleSheet.create({
         padding: 30,
         backgroundColor: '#fff',
         ...theme.shadows.default,
+        position: 'relative',
+    },
+    deleteBtn: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        padding: 10,
+    },
+    editBtn: {
+        position: 'absolute',
+        top: 20,
+        right: 60, // Positioned next to delete button
+        padding: 10,
     },
     avatarLarge: {
         width: 80,

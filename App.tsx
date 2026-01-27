@@ -8,6 +8,7 @@ import Dashboard from './src/screens/Dashboard';
 import RegisterPerson from './src/screens/RegisterPerson';
 import NewPayment from './src/screens/NewPayment';
 import MemberDetails from './src/screens/MemberDetails';
+import EditMember from './src/screens/EditMember';
 
 // Import Types
 import { RootStackParamList } from './src/types';
@@ -57,6 +58,11 @@ export default function App() {
             name="MemberDetails"
             component={MemberDetails}
             options={{ title: 'Detalles del Miembro' }}
+          />
+          <Stack.Screen
+            name="EditMember"
+            component={EditMember}
+            options={{ title: 'Editar Miembro' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

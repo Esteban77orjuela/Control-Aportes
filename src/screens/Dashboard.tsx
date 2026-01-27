@@ -117,28 +117,35 @@ export default function Dashboard() {
                     <Text style={styles.sectionTitle}>Ranking de Aportes</Text>
                 </View>
 
-                {loading ? (
-                    <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
-                ) : (
-                    <FlatList
-                        data={stats?.peopleStats}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderPersonItem}
-                        contentContainerStyle={styles.listContent}
-                        showsVerticalScrollIndicator={false}
-                        ListEmptyComponent={
+                <FlatList
+                    data={stats?.peopleStats || []}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderPersonItem}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={loading}
+                            onRefresh={loadData}
+                            colors={[theme.colors.primary]}
+                        />
+                    }
+                    ListEmptyComponent={
+                        !loading ? (
                             <View style={styles.emptyState}>
                                 <Text style={styles.emptyText}>No hay miembros registrados.</Text>
                             </View>
-                        }
-                        ListFooterComponent={
-                            <View style={styles.footer}>
-                                <Text style={styles.footerText}>© {new Date().getFullYear()} Control de Aportes</Text>
-                                <Text style={styles.footerSubText}>Todos los derechos reservados por Esteban Orjuela</Text>
-                            </View>
-                        }
-                    />
-                )}
+                        ) : (
+                            <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
+                        )
+                    }
+                    ListFooterComponent={
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>© {new Date().getFullYear()} Control de Aportes</Text>
+                            <Text style={styles.footerSubText}>Todos los derechos reservados por Esteban Orjuela</Text>
+                        </View>
+                    }
+                />
             </View>
 
             <View style={styles.fabContainer}>
