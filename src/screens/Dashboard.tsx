@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, FlatList, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, FlatList, StatusBar, Image } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Users, DollarSign, Activity, Plus, UserPlus } from 'lucide-react-native';
@@ -45,6 +45,10 @@ export default function Dashboard() {
     const renderHeader = () => (
         <View style={styles.headerContainer}>
             <View style={styles.headerContent}>
+                <Image
+                    source={require('../../assets/church-logo.png')}
+                    style={styles.logo}
+                />
                 <Text style={styles.appName}>Control de Aportes</Text>
                 <Text style={styles.appSubName}>Restauración Poder y Vida</Text>
                 <View style={styles.versicleContainer}>
@@ -174,6 +178,12 @@ const styles = StyleSheet.create({
     },
     headerContent: {
         alignItems: 'center',
+    },
+    logo: {
+        width: 60,
+        height: 60,
+        marginBottom: 10,
+        resizeMode: 'contain',
     },
     appName: {
         color: '#fff',
