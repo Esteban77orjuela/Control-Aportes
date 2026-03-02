@@ -1,29 +1,49 @@
-import React, { useEffect, useState } from 'react'; // Added imports
+import React, { useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
+// Screens
+import HomeScreen from './src/screens/HomeScreen';
 import Dashboard from './src/screens/Dashboard';
 import RegisterPerson from './src/screens/RegisterPerson';
 import NewPayment from './src/screens/NewPayment';
 import MemberDetails from './src/screens/MemberDetails';
 import EditMember from './src/screens/EditMember';
+import BeverageDashboard from './src/screens/BeverageDashboard';
+import AddBeverage from './src/screens/AddBeverage';
+import RefillStock from './src/screens/RefillStock';
 
-// Import Types
+// Types & Utils
 import { RootStackParamList } from './src/types';
-
 import { theme } from './src/styles/theme';
+import { migrateLocalDataToCloud } from './src/utils/storage';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  useEffect(() => {
+    const runMigration = async () => {
+      const result = await migrateLocalDataToCloud();
+      if (result.success && result.migratedCount > 0) {
+        Alert.alert(
+          "¡Migración Exitosa!",
+          `Se han mudado ${result.migratedCount} miembros y sus aportes a la nube correctamente.`
+        );
+      }
+    };
+
+    runMigration();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>
         <StatusBar style="light" />
         <Stack.Navigator
-          initialRouteName="Dashboard"
+          initialRouteName="Home"
           screenOptions={{
             headerStyle: {
               backgroundColor: theme.colors.primary,
@@ -37,12 +57,18 @@ export default function App() {
             }
           }}
         >
+          {/* Pantalla Principal */}
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{ headerShown: false }}
+          />
+
+          {/* === Módulo Aportes de Música === */}
           <Stack.Screen
             name="Dashboard"
             component={Dashboard}
-            options={{
-              headerShown: false // Custom header in Dashboard
-            }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="RegisterPerson"
@@ -63,6 +89,29 @@ export default function App() {
             name="EditMember"
             component={EditMember}
             options={{ title: 'Editar Miembro' }}
+          />
+
+          {/* === Módulo Control de Bebidas === */}
+          <Stack.Screen
+            name="BeverageDashboard"
+            component={BeverageDashboard}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AddBeverage"
+            component={AddBeverage}
+            options={{
+              title: 'Nueva Categoría',
+              headerStyle: { backgroundColor: '#06B6D4' },
+            }}
+          />
+          <Stack.Screen
+            name="RefillStock"
+            component={RefillStock}
+            options={{
+              title: 'Abastecer Inventario',
+              headerStyle: { backgroundColor: '#06B6D4' },
+            }}
           />
         </Stack.Navigator>
       </NavigationContainer>

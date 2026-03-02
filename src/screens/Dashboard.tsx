@@ -2,8 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, FlatList, StatusBar, Image } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Users, DollarSign, Activity, Plus, UserPlus } from 'lucide-react-native';
+import { Users, DollarSign, Activity, Plus, UserPlus, FileSpreadsheet } from 'lucide-react-native';
 import { getDashboardStats } from '../utils/storage';
+import { exportToExcel } from '../utils/export';
 import { RootStackParamList, Person } from '../types';
 import { theme } from '../styles/theme';
 
@@ -17,6 +18,7 @@ const formatCurrency = (amount: number) => {
 export default function Dashboard() {
     const navigation = useNavigation<DashboardScreenNavigationProp>();
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
     const [stats, setStats] = useState<{
         totalMembers: number;
         totalTransactions: number;
@@ -36,6 +38,12 @@ export default function Dashboard() {
         }
     };
 
+    const handleExport = async () => {
+        setExporting(true);
+        await exportToExcel();
+        setExporting(false);
+    };
+
     useFocusEffect(
         useCallback(() => {
             loadData();
@@ -44,6 +52,22 @@ export default function Dashboard() {
 
     const renderHeader = () => (
         <View style={styles.headerContainer}>
+            <View style={styles.headerTopActions}>
+                <TouchableOpacity
+                    style={[styles.exportButton, exporting && { opacity: 0.7 }]}
+                    onPress={handleExport}
+                    disabled={exporting}
+                >
+                    {exporting ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <>
+                            <FileSpreadsheet size={18} color="#fff" />
+                            <Text style={styles.exportButtonText}>Excel</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            </View>
             <View style={styles.headerContent}>
                 <Image
                     source={require('../../assets/church-logo.png')}
@@ -182,6 +206,28 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
         ...theme.shadows.default,
+    },
+    headerTopActions: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 10,
+    },
+    exportButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+    },
+    exportButtonText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginLeft: 6,
     },
     headerContent: {
         alignItems: 'center',

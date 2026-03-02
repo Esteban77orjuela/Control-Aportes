@@ -2,7 +2,7 @@ export interface Person {
     id: string;
     name: string;
     email: string;
-    phone?: string; // WhatsApp number
+    phone?: string;
     createdAt: string;
 }
 
@@ -10,16 +10,43 @@ export interface Payment {
     id: string;
     personId: string;
     amount: number;
-    date: string; // ISO date string
-    month: number; // 1-12 or 0-11 (Normalize to 1-12 for display, save as is. Let's use 0-11 for JS Date consistency or 1-12. User said "Grid of 12 months". Let's use 0-11)
+    date: string;
+    month: number;
     year: number;
     signatureBase64: string;
 }
 
+// --- Beverages (Bebidas) ---
+
+export interface Beverage {
+    id: string;
+    name: string;
+    type: 'agua' | 'gaseosa';
+    costPrice: number;   // Precio de compra/costo
+    salePrice: number;   // Precio de venta al público
+    stock: number;       // Cantidad disponible
+    createdAt: string;
+}
+
+export interface BeverageSale {
+    id: string;
+    beverageId: string;
+    beverageName: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+    date: string;
+}
+
 export type RootStackParamList = {
+    Home: undefined;
     Dashboard: undefined;
     RegisterPerson: undefined;
     NewPayment: undefined;
     MemberDetails: { personId: string };
     EditMember: { personId: string };
+    BeverageDashboard: undefined;
+    AddBeverage: undefined;
+    SellBeverage: { beverageId: string };
+    RefillStock: { beverageId?: string };
 };
