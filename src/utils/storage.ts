@@ -13,7 +13,6 @@ export const migrateLocalDataToCloud = async (): Promise<{ success: boolean; mig
     try {
         console.log('--- Iniciando migración de datos locales a la nube ---');
 
-        // 1. Obtener datos locales
         const peopleJson = await AsyncStorage.getItem(STORAGE_KEYS.PEOPLE);
         const paymentsJson = await AsyncStorage.getItem(STORAGE_KEYS.PAYMENTS);
 
@@ -27,10 +26,10 @@ export const migrateLocalDataToCloud = async (): Promise<{ success: boolean; mig
 
         console.log(`Encontrados ${localPeople.length} miembros y ${localPayments.length} pagos locales.`);
 
-        // 2. Mapeo de IDs antiguos a nuevos IDs de Supabase (UUIDs)
         const idMap: Record<string, string> = {};
+        let hadErrors = false;
 
-        // 3. Migrar personas una por una para obtener sus nuevos IDs
+        // 3. Migrar personas
         for (const person of localPeople) {
             const { data, error } = await supabase
                 .from('people')
@@ -45,6 +44,7 @@ export const migrateLocalDataToCloud = async (): Promise<{ success: boolean; mig
 
             if (error) {
                 console.error(`Error migrando a ${person.name}:`, error);
+                hadErrors = true; // Marcamos que hubo al menos un error
                 continue;
             }
 
@@ -53,8 +53,7 @@ export const migrateLocalDataToCloud = async (): Promise<{ success: boolean; mig
             }
         }
 
-        // 4. Migrar pagos usando el mapeo de IDs
-        let paymentsMigrated = 0;
+        // 4. Migrar pagos
         const paymentsToInsert = localPayments.map(p => ({
             person_id: idMap[p.personId],
             amount: p.amount,
@@ -62,24 +61,33 @@ export const migrateLocalDataToCloud = async (): Promise<{ success: boolean; mig
             month: p.month,
             year: p.year,
             signature_base64: p.signatureBase64,
-            created_at: p.date // Intentar mantener la fecha original
-        })).filter(p => p.person_id); // Solo insertar si el dueño migró
+            created_at: p.date
+        })).filter(p => p.person_id);
 
         if (paymentsToInsert.length > 0) {
             const { error: pError } = await supabase.from('payments').insert(paymentsToInsert);
-            if (pError) console.error('Error migrando pagos:', pError);
-            else paymentsMigrated = paymentsToInsert.length;
+            if (pError) {
+                console.error('Error migrando pagos:', pError);
+                hadErrors = true;
+            }
+        } else if (localPayments.length > 0) {
+            // Si había pagos locales pero no se pudo armar el insert (porque fallaron las personas)
+            hadErrors = true;
         }
 
-        // 5. Limpieza (Solo si migramos algo)
-        if (Object.keys(idMap).length > 0) {
+        // 5. Limpieza ESTRICTA (Solo borra si NO hubo NINGÚN error y se procesaron TODOS)
+        const allPeopleMigrated = Object.keys(idMap).length === localPeople.length;
+
+        if (!hadErrors && allPeopleMigrated) {
             await AsyncStorage.removeItem(STORAGE_KEYS.PEOPLE);
             await AsyncStorage.removeItem(STORAGE_KEYS.PAYMENTS);
-            console.log('--- Migración completada con éxito. Datos locales eliminados. ---');
+            console.log('--- Migración completada con éxito al 100%. Datos locales eliminados limpiamente. ---');
             return { success: true, migratedCount: Object.keys(idMap).length };
+        } else {
+            console.log('--- Migración parcial o con errores. No se borró la caché local para evitar pérdida de datos. ---');
+            return { success: false, migratedCount: Object.keys(idMap).length };
         }
 
-        return { success: true, migratedCount: 0 };
     } catch (e) {
         console.error('Error fatal en la migración:', e);
         return { success: false, migratedCount: 0 };

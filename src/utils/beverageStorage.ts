@@ -88,25 +88,16 @@ export const getBeverageById = async (id: string): Promise<Beverage | null> => {
 
 export const refillBeverageStock = async (id: string, quantityToAdd: number, newCostPrice?: number): Promise<void> => {
     try {
-        // 1. Obtener stock actual
-        const beverage = await getBeverageById(id);
-        if (!beverage) throw new Error('Bebida no encontrada');
+        const { error } = await supabase.rpc('update_beverage_stock', {
+            p_id: id,
+            p_quantity: quantityToAdd,
+            p_new_cost_price: newCostPrice !== undefined ? newCostPrice : null
+        });
 
-        // 2. Calcular nuevo stock
-        const newStock = beverage.stock + quantityToAdd;
-
-        // 3. Actualizar en Supabase (opcionalmente el precio de costo si cambió)
-        const updateData: any = { stock: newStock };
-        if (newCostPrice !== undefined) {
-            updateData.cost_price = newCostPrice;
+        if (error) {
+            console.error('RPC Error:', error);
+            throw error;
         }
-
-        const { error } = await supabase
-            .from('beverages')
-            .update(updateData)
-            .eq('id', id);
-
-        if (error) throw error;
     } catch (e) {
         console.error('Error recargando stock:', e);
         throw e;
@@ -149,9 +140,17 @@ export const sellBeverage = async (
 
         if (saleError) throw saleError;
 
-        // 2. Descontar del inventario
-        const newStock = beverage.stock - quantity;
-        await updateBeverageStock(beverage.id, newStock);
+        // 2. Descontar del inventario atómicamente (pasando negativo)
+        const { error: stockError } = await supabase.rpc('update_beverage_stock', {
+            p_id: beverage.id,
+            p_quantity: -quantity,
+            p_new_cost_price: null
+        });
+
+        if (stockError) {
+            console.error('RPC Error updating stock on sale:', stockError);
+            throw stockError;
+        }
 
     } catch (e) {
         console.error('Error registrando venta:', e);
