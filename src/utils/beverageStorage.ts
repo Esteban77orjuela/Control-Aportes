@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Beverage, BeverageSale } from '../types';
+import { queueOfflineOperation } from './offlineSync';
 
 // --- Beverages (Inventario) ---
 
@@ -29,6 +30,7 @@ export const getBeverages = async (): Promise<Beverage[]> => {
 
 export const addBeverage = async (beverage: Omit<Beverage, 'id' | 'createdAt'>): Promise<void> => {
     try {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
         const { error } = await supabase
             .from('beverages')
             .insert([{
@@ -37,11 +39,45 @@ export const addBeverage = async (beverage: Omit<Beverage, 'id' | 'createdAt'>):
                 cost_price: beverage.costPrice,
                 sale_price: beverage.salePrice,
                 stock: beverage.stock,
+                user_id: userId
             }]);
 
-        if (error) throw error;
-    } catch (e) {
-        console.error('Error guardando bebida en Supabase:', e);
+        if (error) {
+            if (error.message.includes('fetch') || error.message.includes('network')) {
+                await queueOfflineOperation({
+                    table: 'beverages',
+                    method: 'INSERT',
+                    data: {
+                        name: beverage.name,
+                        type: beverage.type,
+                        cost_price: beverage.costPrice,
+                        sale_price: beverage.salePrice,
+                        stock: beverage.stock,
+                        user_id: userId
+                    }
+                });
+                return;
+            }
+            throw error;
+        }
+    } catch (e: any) {
+        console.error('Error saving beverage to Supabase:', e);
+        if (e.message?.includes('fetch') || e.message?.includes('network')) {
+            const userId = (await supabase.auth.getUser()).data.user?.id;
+            await queueOfflineOperation({
+                table: 'beverages',
+                method: 'INSERT',
+                data: {
+                    name: beverage.name,
+                    type: beverage.type,
+                    cost_price: beverage.costPrice,
+                    sale_price: beverage.salePrice,
+                    stock: beverage.stock,
+                    user_id: userId
+                }
+            });
+            return;
+        }
         throw e;
     }
 };
@@ -95,11 +131,36 @@ export const refillBeverageStock = async (id: string, quantityToAdd: number, new
         });
 
         if (error) {
-            console.error('RPC Error:', error);
+            if (error.message.includes('fetch') || error.message.includes('network')) {
+                await queueOfflineOperation({
+                    table: 'beverages',
+                    method: 'RPC',
+                    rpcName: 'update_beverage_stock',
+                    data: {
+                        p_id: id,
+                        p_quantity: quantityToAdd,
+                        p_new_cost_price: newCostPrice !== undefined ? newCostPrice : null
+                    }
+                });
+                return;
+            }
             throw error;
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error('Error recargando stock:', e);
+        if (e.message?.includes('fetch') || e.message?.includes('network')) {
+            await queueOfflineOperation({
+                table: 'beverages',
+                method: 'RPC',
+                rpcName: 'update_beverage_stock',
+                data: {
+                    p_id: id,
+                    p_quantity: quantityToAdd,
+                    p_new_cost_price: newCostPrice !== undefined ? newCostPrice : null
+                }
+            });
+            return;
+        }
         throw e;
     }
 };
@@ -126,8 +187,9 @@ export const sellBeverage = async (
 ): Promise<void> => {
     try {
         const total = quantity * beverage.salePrice;
+        const userId = (await supabase.auth.getUser()).data.user?.id;
 
-        // 1. Registrar la venta
+        // Intentar registrar la venta
         const { error: saleError } = await supabase
             .from('beverage_sales')
             .insert([{
@@ -136,11 +198,37 @@ export const sellBeverage = async (
                 quantity: quantity,
                 unit_price: beverage.salePrice,
                 total: total,
+                user_id: userId
             }]);
 
-        if (saleError) throw saleError;
+        if (saleError) {
+            if (saleError.message.includes('fetch') || saleError.message.includes('network')) {
+                // Encolar venta
+                await queueOfflineOperation({
+                    table: 'beverage_sales',
+                    method: 'INSERT',
+                    data: {
+                        beverage_id: beverage.id,
+                        beverage_name: beverage.name,
+                        quantity: quantity,
+                        unit_price: beverage.salePrice,
+                        total: total,
+                        user_id: userId
+                    }
+                });
+                // Encolar resta de stock
+                await queueOfflineOperation({
+                    table: 'beverages',
+                    method: 'RPC',
+                    rpcName: 'update_beverage_stock',
+                    data: { p_id: beverage.id, p_quantity: -quantity, p_new_cost_price: null }
+                });
+                return;
+            }
+            throw saleError;
+        }
 
-        // 2. Descontar del inventario atómicamente (pasando negativo)
+        // Si la venta funcionó, intentar descontar stock
         const { error: stockError } = await supabase.rpc('update_beverage_stock', {
             p_id: beverage.id,
             p_quantity: -quantity,
@@ -148,12 +236,43 @@ export const sellBeverage = async (
         });
 
         if (stockError) {
-            console.error('RPC Error updating stock on sale:', stockError);
+            if (stockError.message.includes('fetch') || stockError.message.includes('network')) {
+                await queueOfflineOperation({
+                    table: 'beverages',
+                    method: 'RPC',
+                    rpcName: 'update_beverage_stock',
+                    data: { p_id: beverage.id, p_quantity: -quantity, p_new_cost_price: null }
+                });
+                return;
+            }
             throw stockError;
         }
 
-    } catch (e) {
+    } catch (e: any) {
         console.error('Error registrando venta:', e);
+        if (e.message?.includes('fetch') || e.message?.includes('network')) {
+            const userId = (await supabase.auth.getUser()).data.user?.id;
+            const total = quantity * beverage.salePrice;
+            await queueOfflineOperation({
+                table: 'beverage_sales',
+                method: 'INSERT',
+                data: {
+                    beverage_id: beverage.id,
+                    beverage_name: beverage.name,
+                    quantity: quantity,
+                    unit_price: beverage.salePrice,
+                    total: total,
+                    user_id: userId
+                }
+            });
+            await queueOfflineOperation({
+                table: 'beverages',
+                method: 'RPC',
+                rpcName: 'update_beverage_stock',
+                data: { p_id: beverage.id, p_quantity: -quantity, p_new_cost_price: null }
+            });
+            return;
+        }
         throw e;
     }
 };
@@ -187,7 +306,7 @@ export const resetBeverageSales = async (): Promise<void> => {
         const { error } = await supabase
             .from('beverage_sales')
             .delete()
-            .neq('id', '00000000-0000-0000-0000-000000000000'); // Trick to delete all if RLS allows or just use .gt('id', 0)
+            .neq('id', '00000000-0000-0000-0000-000000000000');
 
         if (error) throw error;
     } catch (e) {

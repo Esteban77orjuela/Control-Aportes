@@ -88,9 +88,13 @@ export default function RefillStock() {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
                 <Text style={styles.formTitle}>Abastecer Stock</Text>
                 <Text style={styles.formSubtitle}>Suma unidades a un producto que ya existe en tu catálogo.</Text>
 

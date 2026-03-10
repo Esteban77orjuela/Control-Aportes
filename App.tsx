@@ -20,23 +20,65 @@ import RefillStock from './src/screens/RefillStock';
 import { RootStackParamList } from './src/types';
 import { theme } from './src/styles/theme';
 import { migrateLocalDataToCloud } from './src/utils/storage';
+import { setupNetworkListener, syncOfflineOperations } from './src/utils/offlineSync';
+
+import { Session } from '@supabase/supabase-js';
+import { supabase } from './src/lib/supabase';
+import AuthScreen from './src/screens/AuthScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  useEffect(() => {
-    const runMigration = async () => {
-      const result = await migrateLocalDataToCloud();
-      if (result.success && result.migratedCount > 0) {
-        Alert.alert(
-          "¡Migración Exitosa!",
-          `Se han mudado ${result.migratedCount} miembros y sus aportes a la nube correctamente.`
-        );
-      }
-    };
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    runMigration();
+  useEffect(() => {
+    // 1. Escuchar cambios en la sesión (Login/Logout)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        // Ejecutar migración solo cuando el usuario se loguea
+        runMigration();
+        syncOfflineOperations(); // Sincronizar cola offline
+      }
+    });
+
+    // Iniciar escucha de red para sincronización automática
+    setupNetworkListener();
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const runMigration = async () => {
+    // Pequeño delay para asegurar que el usuario está listo
+    setTimeout(async () => {
+      const result = await migrateLocalDataToCloud();
+      if (result.success && result.message) {
+        Alert.alert("✅ Datos Sincronizados", result.message);
+      } else if (!result.success && result.message) {
+        Alert.alert("⚠️ Migración Pendiente", result.message);
+      }
+    }, 1000);
+  };
+
+  if (loading) {
+    return null; // O un splash screen
+  }
+
+  // Si no hay sesión, mostramos la pantalla de Auth
+  if (!session) {
+    return (
+      <SafeAreaProvider>
+        <AuthScreen />
+        <StatusBar style="light" />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>

@@ -56,9 +56,13 @@ export default function AddBeverage() {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
                 <Text style={styles.formTitle}>Nueva Categoría</Text>
                 <Text style={styles.formSubtitle}>Define un nuevo producto en tu catálogo (nombre, precio base).</Text>
 

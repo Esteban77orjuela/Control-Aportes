@@ -1,10 +1,13 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Image, ScrollView, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Image, ScrollView, Dimensions, Alert, ActivityIndicator } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Music, Droplets, ChevronRight } from 'lucide-react-native';
+import { Music, Droplets, ChevronRight, LogOut, User, RefreshCcw, WifiOff } from 'lucide-react-native';
 import { RootStackParamList } from '../types';
 import { theme } from '../styles/theme';
+import { logout } from '../utils/storage';
+import { supabase } from '../lib/supabase';
+import { getOfflineQueue, syncOfflineOperations } from '../utils/offlineSync';
 
 const { width } = Dimensions.get('window');
 
@@ -12,6 +15,53 @@ type HomeNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen() {
     const navigation = useNavigation<HomeNavProp>();
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [pendingCount, setPendingCount] = useState(0);
+    const [syncing, setSyncing] = useState(false);
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setUserEmail(user.email || null);
+            }
+        };
+        getUser();
+    }, []);
+
+    const handleLogout = () => {
+        Alert.alert(
+            'Cerrar Sesión',
+            '¿Estás seguro de que quieres salir?',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Salir', onPress: async () => await logout(), style: 'destructive' }
+            ]
+        );
+    };
+
+    const checkPendingQueue = async () => {
+        const queue = await getOfflineQueue();
+        setPendingCount(queue.length);
+    };
+
+    const handleManualSync = async () => {
+        setSyncing(true);
+        const result = await syncOfflineOperations();
+        setSyncing(false);
+        await checkPendingQueue();
+        if (result.processed > 0) {
+            Alert.alert("✅ Sincronizado", `Se subieron ${result.processed} operaciones pendientes.`);
+        } else if (result.errors > 0) {
+            Alert.alert("⚠️ Error", "No se pudieron subir todos los datos. Verifica tu conexión.");
+        }
+    };
+
+    useFocusEffect(
+        React.useCallback(() => {
+            checkPendingQueue();
+        }, [])
+    );
 
     return (
         <View style={styles.container}>
@@ -23,20 +73,50 @@ export default function HomeScreen() {
             >
                 {/* Header Profile Section */}
                 <View style={styles.header}>
+                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                        <LogOut size={22} color="#fff" />
+                    </TouchableOpacity>
+
                     <View style={styles.headerTop}>
                         <Image
                             source={require('../../assets/church-logo.png')}
                             style={styles.logo}
                         />
                         <View style={styles.headerTextContainer}>
-                            <Text style={styles.title}>Control de Aportes</Text>
+                            <Text style={styles.title} numberOfLines={1}>Control de Aportes</Text>
                             <Text style={styles.subtitle}>Restauración Poder y Vida</Text>
+                            {userEmail && (
+                                <View style={styles.userBadge}>
+                                    <User size={12} color="rgba(255,255,255,0.7)" />
+                                    <Text style={styles.userEmailText}>{userEmail}</Text>
+                                </View>
+                            )}
                         </View>
                     </View>
                     <View style={styles.welcomeBanner}>
                         <Text style={styles.welcomeText}>¿Qué deseas gestionar hoy?</Text>
                     </View>
                 </View>
+
+                {/* Status Offline/Sync */}
+                {pendingCount > 0 && (
+                    <TouchableOpacity
+                        style={styles.syncBanner}
+                        onPress={handleManualSync}
+                        disabled={syncing}
+                    >
+                        <View style={styles.syncIconContainer}>
+                            {syncing ? <ActivityIndicator size="small" color="#fff" /> : <RefreshCcw size={16} color="#fff" />}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.syncText}>
+                                {syncing ? "Sincronizando..." : `Tienes ${pendingCount} operaciones pendientes`}
+                            </Text>
+                            <Text style={styles.syncSubtext}>Toca para intentar subir a la nube ahora</Text>
+                        </View>
+                        {!syncing && <WifiOff size={16} color="rgba(255,255,255,0.7)" />}
+                    </TouchableOpacity>
+                )}
 
                 {/* Módulos */}
                 <View style={styles.modulesGrid}>
@@ -122,12 +202,25 @@ const styles = StyleSheet.create({
         paddingHorizontal: 25,
         borderBottomLeftRadius: 40,
         borderBottomRightRadius: 40,
+        position: 'relative',
         ...theme.shadows.default,
+    },
+    logoutButton: {
+        position: 'absolute',
+        top: 55,
+        right: 20,
+        zIndex: 10,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        padding: 10,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
     headerTop: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 20,
+        paddingRight: 50, // Espacio para el botón de logout
     },
     logo: {
         width: 60,
@@ -155,6 +248,23 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 12,
         alignSelf: 'flex-start',
+        marginTop: 5,
+    },
+    userBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        marginTop: 6,
+        alignSelf: 'flex-start',
+    },
+    userEmailText: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 11,
+        fontWeight: '500',
+        marginLeft: 4,
     },
     welcomeText: {
         color: '#fff',
@@ -165,6 +275,35 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         marginTop: -25,
         gap: 20,
+    },
+    syncBanner: {
+        marginHorizontal: 20,
+        marginTop: 15,
+        backgroundColor: '#F59E0B',
+        padding: 15,
+        borderRadius: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        ...theme.shadows.default,
+    },
+    syncIconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    syncText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+    syncSubtext: {
+        color: 'rgba(255,255,255,0.85)',
+        fontSize: 11,
+        marginTop: 1,
     },
     moduleCard: {
         borderRadius: 24,

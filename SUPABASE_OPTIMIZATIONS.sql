@@ -23,3 +23,38 @@ BEGIN
     END IF;
 END;
 $$;
+
+-- 2. FUNCIÓN PARA ESTADÍSTICAS DEL DASHBOARD DE MÚSICA
+-- Esto permite que Supabase haga el trabajo pesado de sumar y contar.
+CREATE OR REPLACE FUNCTION get_music_dashboard_stats()
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    result JSON;
+BEGIN
+    SELECT json_build_object(
+        'totalMembers', (SELECT count(*) FROM people),
+        'totalTransactions', (SELECT count(*) FROM payments),
+        'totalAmount', (SELECT COALESCE(sum(amount), 0) FROM payments),
+        'peopleStats', (
+            SELECT json_agg(p_stats)
+            FROM (
+                SELECT 
+                    p.id, 
+                    p.name, 
+                    p.email, 
+                    p.phone, 
+                    COALESCE(sum(pay.amount), 0) as "totalContributed"
+                FROM people p
+                LEFT JOIN payments pay ON p.id = pay.person_id
+                GROUP BY p.id
+                ORDER BY "totalContributed" DESC
+            ) p_stats
+        )
+    ) INTO result;
+    
+    RETURN result;
+END;
+$$;
