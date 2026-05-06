@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Image, ScrollView, Dimensions, Alert, ActivityIndicator } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Music, Droplets, ChevronRight, LogOut, User, RefreshCcw, WifiOff } from 'lucide-react-native';
+import { Music, Droplets, ChevronRight, LogOut, User, RefreshCcw, WifiOff, Target } from 'lucide-react-native';
 import { RootStackParamList } from '../types';
 import { theme } from '../styles/theme';
-import { logout } from '../utils/storage';
-import { supabase } from '../lib/supabase';
-import { getOfflineQueue, syncOfflineOperations } from '../utils/offlineSync';
+import { useHomeController } from '../hooks/useHomeController';
 
 const { width } = Dimensions.get('window');
 
@@ -15,19 +13,7 @@ type HomeNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen() {
     const navigation = useNavigation<HomeNavProp>();
-    const [userEmail, setUserEmail] = useState<string | null>(null);
-    const [pendingCount, setPendingCount] = useState(0);
-    const [syncing, setSyncing] = useState(false);
-
-    useEffect(() => {
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUserEmail(user.email || null);
-            }
-        };
-        getUser();
-    }, []);
+    const { userEmail, pendingCount, syncing, syncNow, logout } = useHomeController();
 
     const handleLogout = () => {
         Alert.alert(
@@ -40,28 +26,14 @@ export default function HomeScreen() {
         );
     };
 
-    const checkPendingQueue = async () => {
-        const queue = await getOfflineQueue();
-        setPendingCount(queue.length);
-    };
-
     const handleManualSync = async () => {
-        setSyncing(true);
-        const result = await syncOfflineOperations();
-        setSyncing(false);
-        await checkPendingQueue();
+        const result = await syncNow();
         if (result.processed > 0) {
             Alert.alert("✅ Sincronizado", `Se subieron ${result.processed} operaciones pendientes.`);
         } else if (result.errors > 0) {
             Alert.alert("⚠️ Error", "No se pudieron subir todos los datos. Verifica tu conexión.");
         }
     };
-
-    useFocusEffect(
-        React.useCallback(() => {
-            checkPendingQueue();
-        }, [])
-    );
 
     return (
         <View style={styles.container}>
@@ -172,6 +144,33 @@ export default function HomeScreen() {
                             </View>
                         </View>
                         <View style={[styles.sideIndicator, { backgroundColor: '#06B6D4' }]} />
+                    </TouchableOpacity>
+
+                    {/* Módulo 3: Retiro 2026 */}
+                    <TouchableOpacity
+                        style={[styles.moduleCard, styles.retreatCardShadow]}
+                        onPress={() => navigation.navigate('RetreatDashboard')}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.moduleGradient, { backgroundColor: '#fff' }]}>
+                            <View style={styles.moduleTop}>
+                                <View style={[styles.iconCircle, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
+                                    <Target size={28} color="#8B5CF6" />
+                                </View>
+                                <View style={styles.moduleHeaderInfo}>
+                                    <Text style={styles.moduleTitle}>Ahorros Retiro 2026</Text>
+                                    <Text style={styles.moduleStatus}>Metas Individuales</Text>
+                                </View>
+                            </View>
+                            <Text style={styles.moduleDescription}>
+                                Registra abonos firmados por los jóvenes para el retiro, monitorea su progreso y meta.
+                            </Text>
+                            <View style={[styles.moduleAction, { backgroundColor: '#8B5CF6' }]}>
+                                <Text style={styles.moduleActionText}>Entrar al Módulo</Text>
+                                <ChevronRight size={18} color="#fff" />
+                            </View>
+                        </View>
+                        <View style={[styles.sideIndicator, { backgroundColor: '#8B5CF6' }]} />
                     </TouchableOpacity>
                 </View>
 
@@ -320,6 +319,13 @@ const styles = StyleSheet.create({
     },
     beverageCardShadow: {
         shadowColor: '#06B6D4',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
+        elevation: 8,
+    },
+    retreatCardShadow: {
+        shadowColor: '#8B5CF6',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.1,
         shadowRadius: 15,

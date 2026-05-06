@@ -6,7 +6,20 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "check:env": "node scripts/verify-env.js",
+    "typecheck": "tsc --noEmit",
+    "db:guard:staging": "powershell -ExecutionPolicy Bypass -File ./scripts/migration-guard.ps1 -Environment staging -MigrationFile ./supabase/migrations/20260309_0001_core_music.sql",
+    "db:guard:prod": "powershell -ExecutionPolicy Bypass -File ./scripts/migration-guard.ps1 -Environment production -MigrationFile ./supabase/migrations/20260309_0001_core_music.sql -ConfirmProduction",
+    "db:guard:phase2:staging": "powershell -ExecutionPolicy Bypass -File ./scripts/migration-guard.ps1 -Environment staging -MigrationFile ./supabase/migrations/20260309_0004_phase2_security_hardening.sql",
+    "db:guard:phase2:prod": "powershell -ExecutionPolicy Bypass -File ./scripts/migration-guard.ps1 -Environment production -MigrationFile ./supabase/migrations/20260309_0004_phase2_security_hardening.sql -ConfirmProduction",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "deps:check": "ncu --interactive --format group",
+    "security:audit": "npm audit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -16,6 +29,8 @@
     "@react-navigation/native-stack": "^7.11.0",
     "@react-navigation/stack": "^7.6.16",
     "@supabase/supabase-js": "^2.95.3",
+    "@tanstack/react-query": "^5.99.2",
+    "base64-arraybuffer": "^1.0.2",
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",
     "expo": "~54.0.32",
@@ -27,17 +42,52 @@
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-chart-kit": "^6.12.0",
+    "react-native-get-random-values": "^2.0.0",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-signature-canvas": "^5.0.2",
     "react-native-svg": "15.12.1",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-webview": "13.15.0",
+    "uuid": "^14.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.3",
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.0",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "babel-jest": "^30.3.0",
+    "babel-preset-expo": "^55.0.18",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-native": "^5.0.0",
+    "husky": "^9.1.7",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "jest-expo": "^55.0.16",
+    "lint-staged": "^16.4.0",
+    "npm-check-updates": "^22.0.1",
+    "prettier": "^3.8.3",
+    "ts-jest": "^29.4.9",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/__tests__/**/*.test.{ts,tsx}": [
+      "jest --findRelatedTests --passWithNoTests"
+    ]
+  }
 }

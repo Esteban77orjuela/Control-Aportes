@@ -44,12 +44,12 @@ export const theme = {
     typography: {
         header: {
             fontSize: 24,
-            fontWeight: '700' as '700',
+            fontWeight: '700' as const,
             color: '#111827',
         },
         subHeader: {
             fontSize: 18,
-            fontWeight: '600' as '600',
+            fontWeight: '600' as const,
             color: '#374151',
         },
         body: {

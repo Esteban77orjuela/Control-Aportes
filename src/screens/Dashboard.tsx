@@ -2,51 +2,34 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, FlatList, StatusBar, Image } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Users, DollarSign, Activity, Plus, UserPlus, FileSpreadsheet } from 'lucide-react-native';
-import { getDashboardStats } from '../utils/storage';
-import { exportToExcel } from '../utils/export';
+import { Users, DollarSign, Activity, Plus, UserPlus, FileSpreadsheet, Eye, EyeOff } from 'lucide-react-native';
 import { RootStackParamList, Person } from '../types';
 import { theme } from '../styles/theme';
+import { useDashboardController } from '../hooks/useDashboardController';
 
 type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
 // Helper to format currency
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount); // Assuming COP or generic currency
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
 };
 
 export default function Dashboard() {
     const navigation = useNavigation<DashboardScreenNavigationProp>();
-    const [loading, setLoading] = useState(true);
-    const [exporting, setExporting] = useState(false);
-    const [stats, setStats] = useState<{
-        totalMembers: number;
-        totalTransactions: number;
-        totalAmount: number;
-        peopleStats: (Person & { totalContributed: number })[];
-    } | null>(null);
-
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const data = await getDashboardStats();
-            setStats(data);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { stats, loading, refreshing, reload, exporting, exportReport } = useDashboardController();
+    const [showBalance, setShowBalance] = useState(false);
 
     const handleExport = async () => {
-        setExporting(true);
-        await exportToExcel();
-        setExporting(false);
+        try {
+            await exportReport();
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     useFocusEffect(
         useCallback(() => {
-            loadData();
+            reload();
         }, [])
     );
 
@@ -98,8 +81,16 @@ export default function Dashboard() {
                 <View style={[styles.iconContext, { backgroundColor: '#D1FAE5' }]}>
                     <DollarSign size={24} color={theme.colors.secondary} />
                 </View>
-                <Text style={styles.statLabel}>Recaudado</Text>
-                <Text style={styles.statValue}>{formatCurrency(stats?.totalAmount || 0)}</Text>
+                <TouchableOpacity 
+                    style={styles.hideBalanceTrigger} 
+                    onPress={() => setShowBalance(!showBalance)}
+                >
+                    <Text style={styles.statLabel}>Recaudado</Text>
+                    {showBalance ? <Eye size={14} color={theme.colors.textSecondary} /> : <EyeOff size={14} color={theme.colors.textSecondary} />}
+                </TouchableOpacity>
+                <Text style={styles.statValue}>
+                    {showBalance ? formatCurrency(stats?.totalAmount || 0) : '••••••'}
+                </Text>
             </View>
             <View style={styles.statCard}>
                 <View style={[styles.iconContext, { backgroundColor: '#FEF3C7' }]}>
@@ -124,7 +115,9 @@ export default function Dashboard() {
                 <Text style={styles.memberEmail}>{item.email}</Text>
             </View>
             <View style={styles.memberAmount}>
-                <Text style={styles.amountText}>{formatCurrency(item.totalContributed)}</Text>
+                <Text style={styles.amountText}>
+                    {showBalance ? formatCurrency(item.totalContributed) : '••••••'}
+                </Text>
             </View>
         </TouchableOpacity>
     );
@@ -149,8 +142,8 @@ export default function Dashboard() {
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl
-                            refreshing={loading}
-                            onRefresh={loadData}
+                            refreshing={refreshing}
+                            onRefresh={reload}
                             colors={[theme.colors.primary]}
                         />
                     }
@@ -200,7 +193,7 @@ const styles = StyleSheet.create({
     },
     headerContainer: {
         backgroundColor: theme.colors.primary,
-        paddingTop: 60, // Status bar SafeArea replacement
+        paddingTop: 60,
         paddingBottom: 30,
         paddingHorizontal: 20,
         borderBottomLeftRadius: 30,
@@ -272,7 +265,7 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
-        marginTop: -25, // Overlap functionality
+        marginTop: -25,
         paddingHorizontal: 20,
     },
     statsContainer: {
@@ -302,6 +295,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         color: theme.colors.text,
+    },
+    hideBalanceTrigger: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        marginBottom: 2,
     },
     sectionHeader: {
         marginBottom: 10,

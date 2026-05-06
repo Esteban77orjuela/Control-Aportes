@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { User } from 'lucide-react-native';
-import { savePerson, getPeople } from '../utils/storage';
+import { usePeople, useAddPerson } from '../hooks/usePeople';
 import { theme } from '../styles/theme';
 import { Person } from '../types';
 
@@ -11,6 +11,8 @@ export default function RegisterPerson() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
+    const { data: existingPeople = [] } = usePeople();
+    const { mutateAsync: addPerson, isPending: saving } = useAddPerson();
     const [loading, setLoading] = useState(false);
 
     // Normalizar texto para comparación flexible
@@ -37,7 +39,7 @@ export default function RegisterPerson() {
         setLoading(true);
         try {
             // Verificar duplicados contra la nube ANTES de guardar
-            const existingPeople = await getPeople();
+            // Verificar duplicados usando la caché de React Query
 
             // Verificar por teléfono (prioridad)
             if (phone.trim()) {
@@ -91,8 +93,7 @@ export default function RegisterPerson() {
 
     const doSave = async () => {
         setLoading(true);
-        const newPerson: Person = {
-            id: Date.now().toString(),
+        const newPerson: Omit<Person, 'id'> = {
             name: name.trim(),
             email: email.trim(),
             phone: phone.trim(),
@@ -100,7 +101,7 @@ export default function RegisterPerson() {
         };
 
         try {
-            await savePerson(newPerson);
+            await addPerson(newPerson);
             Alert.alert('Éxito', 'Miembro registrado correctamente.', [
                 { text: 'OK', onPress: () => navigation.goBack() }
             ]);
@@ -164,11 +165,11 @@ export default function RegisterPerson() {
                     </View>
 
                     <TouchableOpacity
-                        style={[styles.button, loading && styles.buttonDisabled]}
+                        style={[styles.button, (loading || saving) && styles.buttonDisabled]}
                         onPress={handleSave}
-                        disabled={loading}
+                        disabled={loading || saving}
                     >
-                        <Text style={styles.buttonText}>{loading ? 'Guardando...' : 'Guardar Miembro'}</Text>
+                        <Text style={styles.buttonText}>{(loading || saving) ? 'Guardando...' : 'Guardar Miembro'}</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

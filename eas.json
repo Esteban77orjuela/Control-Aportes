@@ -1,10 +1,25 @@
 {
-    "build": {
-        "preview": {
-            "android": {
-                "buildType": "apk"
-            }
-        },
-        "production": {}
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "development"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "staging"
+      }
+    },
+    "production": {
+      "env": {
+        "APP_ENV": "production"
+      }
     }
+  }
 }

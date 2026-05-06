@@ -27,6 +27,10 @@ export default function AuthScreen() {
             Alert.alert('Error', 'Por favor completa todos los campos.');
             return;
         }
+        if (password.length < 8) {
+            Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres.');
+            return;
+        }
 
         setLoading(true);
         try {

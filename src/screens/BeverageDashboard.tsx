@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Droplets, Package, TrendingUp, ShoppingCart, Plus, Minus, Trash2, PlusCircle } from 'lucide-react-native';
+import { Droplets, Package, TrendingUp, ShoppingCart, Plus, Minus, Trash2, PlusCircle, Eye, EyeOff } from 'lucide-react-native';
 import { RootStackParamList, Beverage } from '../types';
 import { theme } from '../styles/theme';
 import { getBeverageDashboardStats, sellBeverage, deleteBeverage, resetBeverageSales } from '../utils/beverageStorage';
@@ -20,6 +20,7 @@ export default function BeverageDashboard() {
     const navigation = useNavigation<NavProp>();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null);
+    const [showBalance, setShowBalance] = useState(false);
 
     const loadData = async () => {
         setLoading(true);
@@ -181,9 +182,14 @@ export default function BeverageDashboard() {
                     <Text style={styles.statValue}>{stats?.totalStock || 0}</Text>
                     <Text style={styles.statLabel}>En Stock</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.statCard} onPress={handleResetSales} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.statCard} onPress={() => setShowBalance(!showBalance)} activeOpacity={0.7}>
                     <TrendingUp size={20} color="#10B981" />
-                    <Text style={styles.statValue}>{formatCurrency(stats?.totalSalesRevenue || 0)}</Text>
+                    <View style={styles.balanceHeader}>
+                        <Text style={styles.statValue}>
+                            {showBalance ? formatCurrency(stats?.totalSalesRevenue || 0) : '••••••'}
+                        </Text>
+                        {showBalance ? <Eye size={12} color="#9CA3AF" /> : <EyeOff size={12} color="#9CA3AF" />}
+                    </View>
                     <Text style={styles.statLabel}>Vendido</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.statCard} onPress={handleResetSales} activeOpacity={0.7}>
@@ -282,6 +288,12 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: theme.colors.textSecondary,
         marginTop: 2,
+    },
+    balanceHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginTop: 4,
     },
     sectionHeader: {
         paddingHorizontal: 20,

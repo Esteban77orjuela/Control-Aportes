@@ -5,6 +5,7 @@ import * as Sharing from 'expo-sharing';
 import { getPeople, getPayments } from './storage';
 import { Alert } from 'react-native';
 import { Buffer } from 'buffer';
+import { roundMoney } from './money';
 
 // Polyfill necesario para que XLSX funcione en React Native
 if (typeof global.Buffer === 'undefined') {
@@ -36,7 +37,7 @@ export const exportToExcel = async () => {
 
         const exportData = payments.map(p => ({
             'Miembro': nameMap[p.personId] || 'Miembro Eliminado',
-            'Monto': p.amount,
+            'Monto': roundMoney(p.amount),
             'Fecha': p.date,
             'Mes': getMonthName(p.month),
             'Año': p.year,

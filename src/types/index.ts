@@ -38,6 +38,27 @@ export interface BeverageSale {
     date: string;
 }
 
+// --- Retiro 2026 ---
+export interface Youth {
+    id: string;
+    name: string;
+    phone?: string;
+    targetAmount: number;
+    birthDate?: string;    // Nuevo
+    milestones?: string;   // Nuevo
+    gender?: 'male' | 'female' | 'other'; // Nuevo
+    createdAt: string;
+}
+
+export interface RetreatSaving {
+    id: string;
+    youthId: string;
+    amount: number;
+    date: string;
+    signatureBase64?: string; // Mantenido por retrocompatibilidad temporal UI
+    signaturePath?: string;   // Nuevo: Ruta real en Storage
+}
+
 export type RootStackParamList = {
     Home: undefined;
     Dashboard: undefined;
@@ -49,4 +70,10 @@ export type RootStackParamList = {
     AddBeverage: undefined;
     SellBeverage: { beverageId: string };
     RefillStock: { beverageId?: string };
+    // Módulo Retiro
+    RetreatDashboard: undefined;
+    RegisterYouth: undefined;
+    NewRetreatSaving: { preselectedYouthId?: string } | undefined;
+    YouthDetails: { youthId: string };
+    EditYouth: { youthId: string };
 };
