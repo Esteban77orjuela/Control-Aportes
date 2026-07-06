@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] — 2026-07-06
+### Seguridad
+- Auditoría `npm audit` agregada al CI (cada push)
+- Workflow semanal de escaneo de seguridad (`security-scan.yml`)
+- Documento de seguridad (`docs/SEGURIDAD.md`)
+
 ## [1.0.2] — 2026-07-06
 ### Añadido
 - Tests unitarios para `validators.ts` (YouthValidator, SavingValidator) — 12 tests

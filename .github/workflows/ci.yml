@@ -24,6 +24,9 @@ jobs:
       - name: 📦 Instalar dependencias
         run: npm ci || npm install
 
+      - name: 🔍 Auditoría de Seguridad (npm audit)
+        run: npm audit --audit-level=high --omit=dev || echo "Vulnerabilidades encontradas. Revisar."
+
       - name: 🧹 Ejecutar Linter (ESLint)
         run: npm run lint
 
