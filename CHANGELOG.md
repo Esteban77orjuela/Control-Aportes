@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.5] — 2026-07-06
+### Infraestructura y documentación
+- Dockerfile para entorno de desarrollo
+- .dockerignore para builds optimizados
+- README actualizado con toda la información del proyecto
+- Plan de desarrollo completado (13 fases)
+- Documento de seguridad (docs/SEGURIDAD.md)
+
 ## [1.0.4] — 2026-07-06
 ### Observabilidad
 - Integración de Sentry para monitoreo de errores en producción

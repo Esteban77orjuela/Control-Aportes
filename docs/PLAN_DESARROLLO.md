@@ -55,8 +55,8 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 - [ ] Pendiente: Secret scanning
 
 ## Fase 8 — Docker
-- [ ] Pendiente: Crear Dockerfile para entorno de desarrollo
-- [ ] Pendiente: Docker Compose para servicios locales
+- [x] Crear Dockerfile para entorno de desarrollo
+- [x] .dockerignore para builds optimizados
 
 ## Fase 9 — CI/CD
 - [x] CI con GitHub Actions (lint + test + npm audit)
@@ -74,13 +74,16 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 - [ ] Pendiente: Monitoreo con Supabase Logs
 
 ## Fase 12 — Escalabilidad
-- [ ] Pendiente: Evaluar caché con Redis si hay crecimiento
-- [ ] Pendiente: Paginación en consultas grandes
+- [x] Índices de base de datos para consultas frecuentes (idx_people_user_active, idx_payments_user_active, idx_beverages_user_active)
+- [ ] Pendiente: Paginación en consultas grandes (cuando el volumen lo requiera)
+- [ ] Pendiente: Caché con React Query ya implementado
 
 ## Fase 13 — Mantenimiento y Evolución
-- [x] README con estado del proyecto
+- [x] README actualizado con toda la información del proyecto
+- [x] CHANGELOG con historial de versiones
+- [x] Plan de desarrollo documentado
 - [ ] Pendiente: Feature flags para lanzamientos graduales
-- [ ] Pendiente: Versionado semántico
+- [ ] Pendiente: Versionado semántico automatizado
 
 ---
 

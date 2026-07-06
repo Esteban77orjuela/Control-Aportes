@@ -1,0 +1,9 @@
+node_modules
+.expo
+dist
+*.tsbuildinfo
+.git
+.gitignore
+.env
+.env.local
+*.md
