@@ -32,8 +32,20 @@
         "projectId": "d601242c-15fd-44b0-9b8b-828b8e15398f"
       }
     },
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "sentry-expo/upload-sourcemaps",
+          "config": {
+            "organization": "esteban-orjuela",
+            "project": "react-native"
+          }
+        }
+      ]
+    },
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "sentry-expo"
     ]
   }
 }

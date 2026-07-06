@@ -69,7 +69,7 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 - [ ] Pendiente: Evaluar multi-región si crece
 
 ## Fase 11 — Observabilidad
-- [ ] Pendiente: Integrar Sentry para errores en producción
+- [x] Integrar Sentry para errores en producción
 - [ ] Pendiente: Logs estructurados
 - [ ] Pendiente: Monitoreo con Supabase Logs
 

@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Sentry from 'sentry-expo';
 
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -34,9 +35,17 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from './src/lib/supabase';
 import AuthScreen from './src/screens/AuthScreen';
 
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    tracesSampleRate: 0.2,
+    enableInExpoDevelopment: false,
+  });
+}
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// 1. Crear el cliente de React Query
 const queryClient = new QueryClient();
 
 export default function App() {

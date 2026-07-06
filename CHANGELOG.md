@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4] — 2026-07-06
+### Observabilidad
+- Integración de Sentry para monitoreo de errores en producción
+- Configuración de `sentry-expo` en app.json
+- Inicialización de Sentry en App.tsx
+- Variables de entorno para DSN
+
 ## [1.0.3] — 2026-07-06
 ### Seguridad
 - Auditoría `npm audit` agregada al CI (cada push)
