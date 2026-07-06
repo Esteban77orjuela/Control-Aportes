@@ -6,6 +6,10 @@
 - Workflow semanal de escaneo de seguridad (`security-scan.yml`)
 - Documento de seguridad (`docs/SEGURIDAD.md`)
 
+### CI/CD
+- Pipeline de deploy con EAS Build (`deploy.yml`) — manual o por tags
+- Actualización de plan de desarrollo
+
 ## [1.0.2] — 2026-07-06
 ### Añadido
 - Tests unitarios para `validators.ts` (YouthValidator, SavingValidator) — 12 tests

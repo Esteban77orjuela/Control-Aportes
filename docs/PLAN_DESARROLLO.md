@@ -59,10 +59,10 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 - [ ] Pendiente: Docker Compose para servicios locales
 
 ## Fase 9 — CI/CD
-- [x] CI con GitHub Actions (lint + test)
+- [x] CI con GitHub Actions (lint + test + npm audit)
 - [x] Keep-alive automático de Supabase
-- [ ] Pendiente: CD para despliegue automático de APK con EAS
-- [ ] Pendiente: Análisis de calidad en CI
+- [x] CD para despliegue automático de APK con EAS (manual o por tags)
+- [ ] Pendiente: Análisis de calidad en CI (SonarQube)
 
 ## Fase 10 — Cloud
 - [x] Supabase (PostgreSQL, Auth, Storage)
