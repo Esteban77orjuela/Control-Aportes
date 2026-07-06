@@ -42,8 +42,8 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 ## Fase 6 — Testing
 - [x] Jest configurado
 - [x] Tests unitarios: validators, money, uuid, export, RetreatService (43 tests)
+- [x] Tests de integración: RetreatService con mocks (10 tests)
 - [ ] Pendiente: Tests unitarios para useCases
-- [ ] Pendiente: Tests de integración para repositorios
 - [ ] Pendiente: Tests E2E con Detox o Maestro
 - [ ] Pendiente: Alcanzar >70% cobertura
 

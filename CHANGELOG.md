@@ -8,7 +8,8 @@
 - Tests unitarios para `export.ts` (getMonthName) — 4 tests
 - Tests adicionales para `RetreatService` (guessGender, calculateAge, isBirthdayThisWeek) — 12 tests
 - Export de `getMonthName` en `export.ts` para permitir testing
-- Cobertura total: 43 tests, 5 suites
+- Tests de integración para `RetreatService` con mocks (registerYouth, addSaving, updateYouth) — 10 tests
+- Cobertura total: 53 tests, 6 suites
 
 ## [1.0.1] — 2026-07-06
 ### Añadido
