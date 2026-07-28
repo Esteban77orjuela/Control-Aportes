@@ -75,8 +75,10 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 
 ## Fase 12 — Escalabilidad
 - [x] Índices de base de datos para consultas frecuentes (idx_people_user_active, idx_payments_user_active, idx_beverages_user_active)
+- [x] Cache local de lectura con AsyncStorage (TTL configurable)
+- [x] Monitoreo de conexión en tiempo real (NetInfo + Supabase ping)
+- [x] Indicador visual de desconexión (ConnectionBanner)
 - [ ] Pendiente: Paginación en consultas grandes (cuando el volumen lo requiera)
-- [ ] Pendiente: Caché con React Query ya implementado
 
 ## Fase 13 — Mantenimiento y Evolución
 - [x] README actualizado con toda la información del proyecto

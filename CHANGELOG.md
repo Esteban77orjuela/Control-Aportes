@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6] — 2026-07-27
+### Resiliencia offline
+- Cache local de lectura (`src/utils/localCache.ts`) — guarda datos en AsyncStorage con TTL
+- Hook de monitoreo de conexión (`src/hooks/useConnectionStatus.ts`) — verifica red + Supabase cada 30s
+- Barra de alerta roja/verde (`src/components/ConnectionBanner.tsx`) — visible cuando Supabase falla
+- Integración del banner en AuthScreen y app principal
+
 ## [1.0.5] — 2026-07-06
 ### Infraestructura y documentación
 - Dockerfile para entorno de desarrollo

@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import * as Sentry from 'sentry-expo';
+import * as Sentry from '@sentry/react-native';
 
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -30,6 +30,9 @@ import { RootStackParamList } from './src/types';
 import { theme } from './src/styles/theme';
 import { migrateLocalDataToCloud } from './src/utils/storage';
 import { setupNetworkListener, syncOfflineOperations } from './src/utils/offlineSync';
+
+// Connection monitoring
+import { ConnectionBanner } from './src/components/ConnectionBanner';
 
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './src/lib/supabase';
@@ -95,6 +98,7 @@ export default function App() {
     return (
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
+          <ConnectionBanner />
           <AuthScreen />
           <StatusBar style="light" />
         </SafeAreaProvider>
@@ -105,6 +109,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
+        <ConnectionBanner />
         <NavigationContainer>
           <StatusBar style="light" />
           <Stack.Navigator
