@@ -43,7 +43,6 @@ if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
     tracesSampleRate: 0.2,
-    enableInExpoDevelopment: false,
   });
 }
 

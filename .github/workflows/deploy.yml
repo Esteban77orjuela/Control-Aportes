@@ -3,8 +3,16 @@ name: Deploy APK con EAS Build
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: Acción a ejecutar
+        required: true
+        default: update
+        type: choice
+        options:
+          - update
+          - build
       profile:
-        description: Perfil de build (preview/production)
+        description: Canal (preview/production)
         required: true
         default: preview
         type: choice
@@ -16,7 +24,7 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,10 +36,16 @@ jobs:
 
       - run: npm ci
 
-      - name: Build con EAS
+      - name: Configurar EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - run: eas build --platform android --profile ${{ inputs.profile || 'preview' }} --non-interactive
+      - name: Publicar actualización OTA (EAS Update)
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'update' || github.event_name == 'push'
+        run: eas update --channel ${{ inputs.profile || 'preview' }} --non-interactive --message "Update ${{ github.sha }}"
+
+      - name: Compilar APK (EAS Build)
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'build'
+        run: eas build --platform android --profile ${{ inputs.profile || 'preview' }} --non-interactive

@@ -15,11 +15,6 @@ export const useHomeController = () => {
     setPendingCount(count);
   }, []);
 
-  const loadUserEmail = useCallback(async () => {
-    const email = await getCurrentUserEmail();
-    setUserEmail(email);
-  }, []);
-
   const syncNow = useCallback(async () => {
     setSyncing(true);
     const result = await syncPendingQueue();
@@ -33,8 +28,8 @@ export const useHomeController = () => {
   }, []);
 
   useEffect(() => {
-    loadUserEmail();
-  }, [loadUserEmail]);
+    getCurrentUserEmail().then(setUserEmail);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

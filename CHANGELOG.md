@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0] — 2026-07-27
+### EAS Update (actualizaciones OTA)
+- Instalado `expo-updates`
+- Canales configurados en `eas.json`: development, preview, production
+- `appVersionSource: remote` para versionado automático
+- URL de updates y runtimeVersion en `app.json`
+- Workflow de deploy actualizado: puede publicar updates OTA o compilar APK
+
+### Dependencias
+- Instalado `react-native-gesture-handler` (peer dependency requerida por @react-navigation/stack)
+- Deduplicadas dependencias con `npm dedupe` (expo-constants)
+- Expo Doctor: 18/18 checks pasando
+
+## [1.0.7] — 2026-07-27
+### Estado Anual interactivo
+- Click en mes rojo (no pagado): abre registro de pago con persona y mes precargados
+- Click en mes verde (pagado): permite eliminar el pago de ese mes (soft delete)
+- `PaymentRepository.delete()` con soft delete
+- Hook `useDeletePayment`
+- `NewPayment` acepta params opcionales (personId, month, year) y bloquea la fecha
+
 ## [1.0.6] — 2026-07-27
 ### Resiliencia offline
 - Cache local de lectura (`src/utils/localCache.ts`) — guarda datos en AsyncStorage con TTL
