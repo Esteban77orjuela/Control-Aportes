@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Dimensions,
-  FlatList,
   Image,
   ActivityIndicator,
   Alert,
   TouchableOpacity,
 } from 'react-native';
-import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BarChart } from 'react-native-chart-kit';
 import { Trash2, Edit2 } from 'lucide-react-native';
-import { getPersonById, getPaymentsByPerson, deletePerson, deletePayment } from '../utils/storage';
+import { usePersonById, useDeletePerson } from '../hooks/usePeople';
+import { usePaymentsByPerson, useDeletePayment } from '../hooks/usePayments';
+import { StorageRepository } from '../data/repositories/StorageRepository';
 import { Person, Payment, RootStackParamList } from '../types';
 import { theme } from '../styles/theme';
 
@@ -31,22 +32,21 @@ export default function MemberDetails() {
   const navigation = useNavigation<MemberDetailsNavigationProp>();
   const { personId } = route.params;
 
-  const [person, setPerson] = useState<Person | undefined>(undefined);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const personQuery = usePersonById(personId);
+  const paymentsQuery = usePaymentsByPerson(personId);
+  const deletePersonMutation = useDeletePerson();
+  const deletePaymentMutation = useDeletePayment();
 
-  useEffect(() => {
-    const refresh = () => {
-      Promise.all([getPersonById(personId), getPaymentsByPerson(personId)]).then(([p, pays]) => {
-        setPerson(p);
-        setPayments(pays);
-        setLoading(false);
-      });
-    };
-    refresh();
-    const unsubscribe = navigation.addListener('focus', refresh);
-    return unsubscribe;
-  }, [personId, navigation]);
+  const person = personQuery.data as Person | undefined;
+  const payments = (paymentsQuery.data as Payment[] | undefined) || [];
+  const loading = personQuery.isLoading || personQuery.isPending;
+
+  useFocusEffect(
+    useCallback(() => {
+      personQuery.refetch();
+      paymentsQuery.refetch();
+    }, [personQuery, paymentsQuery])
+  );
 
   const handleDelete = () => {
     Alert.alert(
@@ -59,9 +59,9 @@ export default function MemberDetails() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deletePerson(personId);
+              await deletePersonMutation.mutateAsync(personId);
               navigation.goBack();
-            } catch (e) {
+            } catch {
               Alert.alert('Error', 'No se pudo eliminar el miembro.');
             }
           },
@@ -78,16 +78,26 @@ export default function MemberDetails() {
       const paymentForMonth = payments.find(p => p.month === index && p.year === currentYear);
 
       if (paymentForMonth) {
-        Alert.alert('Eliminar pago', `¿Deseas eliminar el pago del mes de ${MONTHS[index]}?`, [
+        Alert.alert('Pago registrado', `Mes de ${MONTHS[index]}`, [
           { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Editar pago',
+            onPress: () => {
+              navigation.navigate('NewPayment', {
+                personId,
+                month: index,
+                year: currentYear,
+                editPaymentId: paymentForMonth.id,
+              });
+            },
+          },
           {
             text: 'Eliminar',
             style: 'destructive',
             onPress: async () => {
               try {
-                await deletePayment(paymentForMonth.id);
-                loadData();
-              } catch (e) {
+                await deletePaymentMutation.mutateAsync(paymentForMonth.id);
+              } catch {
                 Alert.alert('Error', 'No se pudo eliminar el pago.');
               }
             },
@@ -171,21 +181,25 @@ export default function MemberDetails() {
     };
   };
 
-  const renderPaymentItem = ({ item }: { item: Payment }) => (
-    <View style={styles.paymentCard}>
-      <View style={styles.paymentHeader}>
-        <Text style={styles.paymentDate}>{item.date}</Text>
-        <Text style={styles.paymentAmount}>${item.amount}</Text>
+  const renderPaymentItem = ({ item }: { item: Payment }) => {
+    const signatureUri =
+      item.signatureBase64 || StorageRepository.getSignatureUrl(item.signaturePath || '');
+    return (
+      <View style={styles.paymentCard}>
+        <View style={styles.paymentHeader}>
+          <Text style={styles.paymentDate}>{item.date}</Text>
+          <Text style={styles.paymentAmount}>${item.amount}</Text>
+        </View>
+        <Text style={styles.signatureLabel}>Firma:</Text>
+        <View style={styles.signaturePreview}>
+          <Image
+            source={{ uri: signatureUri }}
+            style={{ width: '100%', height: 80, resizeMode: 'contain' }}
+          />
+        </View>
       </View>
-      <Text style={styles.signatureLabel}>Firma:</Text>
-      <View style={styles.signaturePreview}>
-        <Image
-          source={{ uri: item.signatureBase64 }}
-          style={{ width: '100%', height: 80, resizeMode: 'contain' }}
-        />
-      </View>
-    </View>
-  );
+    );
+  };
 
   if (loading) {
     return (

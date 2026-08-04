@@ -14,6 +14,7 @@ export interface Payment {
   month: number;
   year: number;
   signatureBase64: string;
+  signaturePath?: string;
 }
 
 // --- Beverages (Bebidas) ---
@@ -62,8 +63,11 @@ export interface RetreatSaving {
 export type RootStackParamList = {
   Home: undefined;
   Dashboard: undefined;
+  PendingMembers: undefined;
   RegisterPerson: undefined;
-  NewPayment: { personId?: string; month?: number; year?: number } | undefined;
+  NewPayment:
+    | { personId?: string; month?: number; year?: number; editPaymentId?: string }
+    | undefined;
   MemberDetails: { personId: string };
   EditMember: { personId: string };
   BeverageDashboard: undefined;

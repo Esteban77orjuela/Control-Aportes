@@ -26,6 +26,8 @@ import {
 import { RootStackParamList, Person } from '../types';
 import { theme } from '../styles/theme';
 import { useDashboardController } from '../hooks/useDashboardController';
+import { usePeople } from '../hooks/usePeople';
+import { usePayments } from '../hooks/usePayments';
 
 type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -43,6 +45,19 @@ export default function Dashboard() {
   const { stats, loading, refreshing, reload, exporting, exportReport } = useDashboardController();
   const [showBalance, setShowBalance] = useState(false);
 
+  const { data: people = [] } = usePeople();
+  const { data: payments = [] } = usePayments();
+
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  const pendingPeople = people.filter(
+    p =>
+      !payments.some(
+        pay => pay.personId === p.id && pay.month === currentMonth && pay.year === currentYear
+      )
+  );
+
   const handleExport = async () => {
     try {
       await exportReport();
@@ -59,6 +74,15 @@ export default function Dashboard() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
+      <View style={styles.headerLeftActions}>
+        <TouchableOpacity
+          style={styles.pendingButton}
+          onPress={() => navigation.navigate('PendingMembers')}
+        >
+          <View style={styles.pendingButtonDot} />
+          <Text style={styles.exportButtonText}>Pendientes ({pendingPeople.length})</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.headerTopActions}>
         <TouchableOpacity
           style={[styles.exportButton, exporting && { opacity: 0.7 }]}
@@ -236,6 +260,18 @@ const styles = StyleSheet.create({
     top: 50,
     right: 20,
     zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerLeftActions: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   exportButton: {
     flexDirection: 'row',
@@ -246,6 +282,23 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  pendingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  pendingButtonDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FCA5A5',
+    marginRight: 6,
   },
   exportButtonText: {
     color: '#fff',

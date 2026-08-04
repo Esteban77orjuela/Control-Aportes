@@ -18,12 +18,27 @@ import SignatureScreen, { SignatureViewRef } from 'react-native-signature-canvas
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { ChevronDown, Calendar, Search } from 'lucide-react-native';
 import { usePeople } from '../hooks/usePeople';
-import { useAddPayment } from '../hooks/usePayments';
+import { useAddPayment, useDeletePayment, usePaymentsByPerson } from '../hooks/usePayments';
 import { Person, RootStackParamList } from '../types';
 import { theme } from '../styles/theme';
 import { parseMoneyInput } from '../utils/money';
 
 type NewPaymentRouteProp = RouteProp<RootStackParamList, 'NewPayment'>;
+
+const MONTH_NAMES = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
 
 export default function NewPayment() {
   const navigation = useNavigation();
@@ -31,11 +46,13 @@ export default function NewPayment() {
   const preselectedPersonId = route.params?.personId;
   const preselectedMonth = route.params?.month;
   const preselectedYear = route.params?.year;
+  const editPaymentId = route.params?.editPaymentId;
 
   const signatureRef = useRef<SignatureViewRef>(null);
 
   const { data: people = [] } = usePeople();
   const { mutateAsync: addPayment, isPending: saving } = useAddPayment();
+  const { mutateAsync: deletePayment } = useDeletePayment();
 
   const [manualPerson, setManualPerson] = useState<Person | null>(null);
   const [amount, setAmount] = useState('');
@@ -48,12 +65,25 @@ export default function NewPayment() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [searchPeople, setSearchPeople] = useState('');
+  const [loadedEditId, setLoadedEditId] = useState<string | null>(null);
 
   const monthLocked = preselectedMonth !== undefined;
 
   const selectedPerson =
     manualPerson ??
     (preselectedPersonId ? (people.find(p => p.id === preselectedPersonId) ?? null) : null);
+
+  const { data: personPayments = [] } = usePaymentsByPerson(selectedPerson?.id || '');
+
+  const editingPayment = editPaymentId
+    ? (personPayments.find(p => p.id === editPaymentId) ?? null)
+    : null;
+
+  if (editingPayment && loadedEditId !== editingPayment.id) {
+    setLoadedEditId(editingPayment.id);
+    setAmount(String(editingPayment.amount));
+    setDate(editingPayment.date);
+  }
 
   const filteredPeople = people.filter(p =>
     p.name.toLowerCase().includes(searchPeople.toLowerCase())
@@ -113,17 +143,38 @@ export default function NewPayment() {
       return;
     }
 
+    const existingPayment = personPayments.find(
+      p =>
+        p.id !== editPaymentId &&
+        p.month === selectedDate.getMonth() &&
+        p.year === selectedDate.getFullYear()
+    );
+    if (existingPayment) {
+      Alert.alert(
+        'Pago duplicado',
+        `Ya existe un aporte registrado para ${selectedPerson.name} en ${MONTH_NAMES[selectedDate.getMonth()]} de ${selectedDate.getFullYear()}. Elimínalo desde el perfil del miembro si deseas registrarlo nuevamente.`
+      );
+      return;
+    }
+
     try {
-      await addPayment({
+      const newPayment = {
         personId: selectedPerson.id,
         amount: parsedAmount,
         date: date,
         month: selectedDate.getMonth(),
         year: selectedDate.getFullYear(),
         signatureBase64: signatureBase64,
-      });
+      };
 
-      Alert.alert('Éxito', 'Pago registrado.', [
+      await addPayment(newPayment);
+
+      // Al editar: el pago anterior se reemplaza (nuevo queda registrado)
+      if (editPaymentId) {
+        await deletePayment(editPaymentId);
+      }
+
+      Alert.alert('Éxito', editPaymentId ? 'Pago actualizado.' : 'Pago registrado.', [
         {
           text: 'Enviar WhatsApp',
           onPress: () => {
@@ -133,7 +184,7 @@ export default function NewPayment() {
         },
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'No se pudo guardar el pago.');
     }
   };
@@ -150,7 +201,7 @@ export default function NewPayment() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Nuevo Aporte</Text>
+          <Text style={styles.title}>{editPaymentId ? 'Editar Aporte' : 'Nuevo Aporte'}</Text>
         </View>
 
         <View style={styles.formCard}>

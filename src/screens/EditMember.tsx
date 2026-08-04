@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { getPersonById, updatePerson } from '../utils/storage';
+import { usePersonById, useUpdatePerson } from '../hooks/usePeople';
 import { theme } from '../styles/theme';
 import { Person, RootStackParamList } from '../types';
 
@@ -22,27 +22,24 @@ export default function EditMember() {
   const route = useRoute<EditMemberRouteProp>();
   const { personId } = route.params;
 
+  const personQuery = usePersonById(personId);
+  const updatePersonMutation = useUpdatePerson();
+
+  const person = personQuery.data as Person | undefined;
+  const loading = personQuery.isLoading || personQuery.isPending;
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [originalPerson, setOriginalPerson] = useState<Person | null>(null);
+  const [loadedPersonId, setLoadedPersonId] = useState<string | null>(null);
 
-  useEffect(() => {
-    getPersonById(personId).then(person => {
-      if (person) {
-        setOriginalPerson(person);
-        setName(person.name);
-        setEmail(person.email);
-        setPhone(person.phone || '');
-      } else {
-        Alert.alert('Error', 'No se encontró el miembro.');
-        navigation.goBack();
-      }
-      setLoading(false);
-    });
-  }, [personId]);
+  if (person && loadedPersonId !== person.id) {
+    setLoadedPersonId(person.id);
+    setName(person.name);
+    setEmail(person.email);
+    setPhone(person.phone || '');
+  }
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -50,22 +47,22 @@ export default function EditMember() {
       return;
     }
 
-    if (!originalPerson) return;
+    if (!person) return;
 
     setSaving(true);
     const updatedPerson: Person = {
-      ...originalPerson,
+      ...person,
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim(),
     };
 
     try {
-      await updatePerson(updatedPerson);
+      await updatePersonMutation.mutateAsync(updatedPerson);
       Alert.alert('Éxito', 'Información actualizada.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'No se pudo actualizar el miembro.');
     } finally {
       setSaving(false);
@@ -76,6 +73,14 @@ export default function EditMember() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (!person) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Miembro no encontrado</Text>
       </View>
     );
   }
@@ -150,6 +155,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
   },
   header: {
     marginBottom: 40,

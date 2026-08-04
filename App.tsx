@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/react-native';
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
 import Dashboard from './src/screens/Dashboard';
+import PendingMembers from './src/screens/PendingMembers';
 import RegisterPerson from './src/screens/RegisterPerson';
 import NewPayment from './src/screens/NewPayment';
 import MemberDetails from './src/screens/MemberDetails';
@@ -138,6 +139,11 @@ export default function App() {
               name="Dashboard"
               component={Dashboard}
               options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PendingMembers"
+              component={PendingMembers}
+              options={{ title: 'Pendientes' }}
             />
             <Stack.Screen
               name="RegisterPerson"

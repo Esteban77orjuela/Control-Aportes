@@ -1,6 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PaymentRepository } from '../data/repositories/PaymentRepository';
 import { Payment } from '../types';
+
+export const usePayments = () => {
+  return useQuery({
+    queryKey: ['payments'],
+    queryFn: () => PaymentRepository.getAll(),
+  });
+};
+
+export const usePaymentsByPerson = (personId: string) => {
+  return useQuery({
+    queryKey: ['payments', personId],
+    queryFn: () => PaymentRepository.getByPersonId(personId),
+    enabled: !!personId,
+  });
+};
 
 export const useAddPayment = () => {
   const queryClient = useQueryClient();
