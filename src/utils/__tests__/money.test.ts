@@ -54,4 +54,35 @@ describe('parseMoneyInput', () => {
   test('limpia caracteres no numéricos', () => {
     expect(parseMoneyInput('$ 5.000,75 COP')).toBe(5000.75);
   });
+
+  test('parsea millones con puntos de miles', () => {
+    expect(parseMoneyInput('1.234.567')).toBe(1234567);
+  });
+
+  test('parsea millones con comas de miles', () => {
+    expect(parseMoneyInput('1,234,567')).toBe(1234567);
+  });
+
+  test('parsea millones exactos', () => {
+    expect(parseMoneyInput('1.000.000')).toBe(1000000);
+  });
+
+  test('parsea millones con decimales', () => {
+    expect(parseMoneyInput('1.234.567,89')).toBe(1234567.89);
+    expect(parseMoneyInput('1,234,567.89')).toBe(1234567.89);
+  });
+
+  test('no confunde miles de 3 dígitos con decimales', () => {
+    expect(parseMoneyInput('10.000')).toBe(10000);
+    expect(parseMoneyInput('1.000')).toBe(1000);
+    expect(parseMoneyInput('1234.567')).toBe(1234567);
+  });
+
+  test('parsea decimales de 1 dígito', () => {
+    expect(parseMoneyInput('1234,5')).toBe(1234.5);
+  });
+
+  test('parsea punto decimal sin parte entera', () => {
+    expect(parseMoneyInput('.50')).toBe(0.5);
+  });
 });

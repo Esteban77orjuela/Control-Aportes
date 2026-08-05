@@ -158,6 +158,12 @@ export default function NewPayment() {
     }
 
     try {
+      // Al editar: primero se elimina el pago anterior para que el índice único
+      // (user_id, person_id, month, year) no rechace el nuevo ni queden duplicados.
+      if (editPaymentId) {
+        await deletePayment(editPaymentId);
+      }
+
       const newPayment = {
         personId: selectedPerson.id,
         amount: parsedAmount,
@@ -168,11 +174,6 @@ export default function NewPayment() {
       };
 
       await addPayment(newPayment);
-
-      // Al editar: el pago anterior se reemplaza (nuevo queda registrado)
-      if (editPaymentId) {
-        await deletePayment(editPaymentId);
-      }
 
       Alert.alert('Éxito', editPaymentId ? 'Pago actualizado.' : 'Pago registrado.', [
         {

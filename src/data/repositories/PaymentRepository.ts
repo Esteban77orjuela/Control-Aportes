@@ -17,6 +17,7 @@ export const PaymentRepository = {
         .from('payments')
         .select(includeSignature ? '*' : 'id,person_id,amount,date,month,year')
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('date', { ascending: false });
 
       const { data, error } = (await query) as { data: any[] | null; error: any };
@@ -114,6 +115,7 @@ export const PaymentRepository = {
         .select('*') // Aquí sí necesitamos la firma para el detalle
         .eq('person_id', personId)
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('date', { ascending: false });
 
       if (error) throw error;
