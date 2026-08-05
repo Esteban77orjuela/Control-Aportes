@@ -16,6 +16,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint src --ext .ts,.tsx",
+    "deploy": "eas update --channel preview",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "deps:check": "ncu --interactive --format group",
     "security:audit": "npm audit",

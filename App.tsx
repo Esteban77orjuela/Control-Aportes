@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
+import * as Updates from 'expo-updates';
 
 // Screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -55,6 +56,18 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const runMigration = async () => {
+    // Pequeño delay para asegurar que el usuario está listo
+    setTimeout(async () => {
+      const result = await migrateLocalDataToCloud();
+      if (result.success && result.message) {
+        Alert.alert("✅ Datos Sincronizados", result.message);
+      } else if (!result.success && result.message) {
+        Alert.alert("⚠️ Migración Pendiente", result.message);
+      }
+    }, 1000);
+  };
+
   useEffect(() => {
     // 1. Escuchar cambios en la sesión (Login/Logout)
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -77,17 +90,22 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const runMigration = async () => {
-    // Pequeño delay para asegurar que el usuario está listo
-    setTimeout(async () => {
-      const result = await migrateLocalDataToCloud();
-      if (result.success && result.message) {
-        Alert.alert("✅ Datos Sincronizados", result.message);
-      } else if (!result.success && result.message) {
-        Alert.alert("⚠️ Migración Pendiente", result.message);
+  // Buscar actualizaciones OTA automáticamente al abrir la app
+  useEffect(() => {
+    if (loading || __DEV__) return;
+    const applyUpdateIfAvailable = async () => {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (e) {
+        console.warn('Fallo al buscar actualizaciones', e);
       }
-    }, 1000);
-  };
+    };
+    applyUpdateIfAvailable();
+  }, [loading]);
 
   if (loading) {
     return null; // O un splash screen
