@@ -96,7 +96,7 @@ export default function HomeScreen() {
             <Image source={require('../../assets/church-logo.png')} style={styles.logo} />
             <View style={styles.headerTextContainer}>
               <Text style={styles.title} numberOfLines={1}>
-                Control de Aportes
+                Control de Aportess
               </Text>
               <Text style={styles.subtitle}>Restauración Poder y Vida</Text>
               {userEmail && (
