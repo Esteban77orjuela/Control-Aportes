@@ -141,24 +141,11 @@ export const PeopleRepository = {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('No user logged in');
 
-      const now = new Date().toISOString();
-
-      const { error } = await supabase
-        .from('people')
-        .update({ deleted_at: now })
-        .eq('id', id)
-        .eq('user_id', user.id);
+      const { error } = await supabase.rpc('soft_delete_person', {
+        p_person_id: id,
+      });
 
       if (error) throw error;
-
-      // Soft delete en cascada: los pagos del miembro también se ocultan
-      const { error: paymentsError } = await supabase
-        .from('payments')
-        .update({ deleted_at: now })
-        .eq('person_id', id)
-        .eq('user_id', user.id);
-
-      if (paymentsError) throw paymentsError;
     } catch (e) {
       console.error('Error deleting person in Supabase', e);
       throw e;

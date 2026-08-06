@@ -196,11 +196,9 @@ export const BeverageRepository = {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('No user logged in');
 
-      const { error } = await supabase
-        .from('beverages')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('user_id', user.id);
+      const { error } = await supabase.rpc('soft_delete_beverage', {
+        p_beverage_id: id,
+      });
 
       if (error) throw error;
     } catch (e) {

@@ -61,8 +61,11 @@ export default function MemberDetails() {
             try {
               await deletePersonMutation.mutateAsync(personId);
               navigation.goBack();
-            } catch {
-              Alert.alert('Error', 'No se pudo eliminar el miembro.');
+            } catch (e: any) {
+              Alert.alert(
+                'Error',
+                `No se pudo eliminar el miembro.${e?.message ? ` ${e.message}` : ''}`
+              );
             }
           },
         },
@@ -97,8 +100,11 @@ export default function MemberDetails() {
             onPress: async () => {
               try {
                 await deletePaymentMutation.mutateAsync(paymentForMonth.id);
-              } catch {
-                Alert.alert('Error', 'No se pudo eliminar el pago.');
+              } catch (e: any) {
+                Alert.alert(
+                  'Error',
+                  `No se pudo eliminar el pago.${e?.message ? ` ${e.message}` : ''}`
+                );
               }
             },
           },

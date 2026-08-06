@@ -42,6 +42,23 @@ export const PaymentRepository = {
 
   save: async (payment: Omit<Payment, 'id'> & { signaturePath?: string }): Promise<void> => {
     const normalizedAmount = roundMoney(payment.amount);
+
+    if (!payment.personId || typeof payment.personId !== 'string') {
+      throw new Error('Datos de pago inválidos: falta el miembro.');
+    }
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+      throw new Error('Datos de pago inválidos: el monto no es un número válido.');
+    }
+    if (!Number.isInteger(payment.month) || payment.month < 0 || payment.month > 11) {
+      throw new Error('Datos de pago inválidos: el mes no es válido.');
+    }
+    if (!Number.isInteger(payment.year) || payment.year < 2000 || payment.year > 2100) {
+      throw new Error('Datos de pago inválidos: el año no es válido.');
+    }
+    if (!payment.date || typeof payment.date !== 'string') {
+      throw new Error('Datos de pago inválidos: falta la fecha.');
+    }
+
     try {
       const user = await getAuthenticatedUserOrThrow();
       const { error } = await supabase.from('payments').insert([
@@ -143,11 +160,9 @@ export const PaymentRepository = {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('No user logged in');
 
-      const { error } = await supabase
-        .from('payments')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('user_id', user.id);
+      const { error } = await supabase.rpc('soft_delete_payment', {
+        p_payment_id: id,
+      });
 
       if (error) throw error;
     } catch (e) {

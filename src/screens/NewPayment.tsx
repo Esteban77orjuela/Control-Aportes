@@ -82,7 +82,7 @@ export default function NewPayment() {
   if (editingPayment && loadedEditId !== editingPayment.id) {
     setLoadedEditId(editingPayment.id);
     setAmount(String(editingPayment.amount));
-    setDate(editingPayment.date);
+    setDate(editingPayment.date.slice(0, 10));
   }
 
   const filteredPeople = people.filter(p =>
@@ -135,8 +135,13 @@ export default function NewPayment() {
   };
 
   const onSave = async (signatureBase64: string) => {
-    const selectedDate = new Date(date + 'T12:00:00');
+    const selectedDate = new Date(date.slice(0, 10) + 'T12:00:00');
     const parsedAmount = parseMoneyInput(amount);
+
+    if (isNaN(selectedDate.getTime())) {
+      Alert.alert('Fecha inválida', 'La fecha del aporte no es válida.');
+      return;
+    }
 
     if (!selectedPerson || parsedAmount === null || parsedAmount <= 0 || !signatureBase64) {
       Alert.alert('Faltan datos', 'Asegúrate de seleccionar miembro, monto y firmar.');
@@ -185,8 +190,8 @@ export default function NewPayment() {
         },
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch {
-      Alert.alert('Error', 'No se pudo guardar el pago.');
+    } catch (e: any) {
+      Alert.alert('Error', `No se pudo guardar el pago.${e?.message ? ` ${e.message}` : ''}`);
     }
   };
 
@@ -227,7 +232,7 @@ export default function NewPayment() {
 
               {showDatePicker && (
                 <DateTimePicker
-                  value={new Date(date + 'T12:00:00')}
+                  value={new Date(date.slice(0, 10) + 'T12:00:00')}
                   mode="date"
                   display="default"
                   onChange={onDateChange}
