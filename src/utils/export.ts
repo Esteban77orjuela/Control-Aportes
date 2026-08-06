@@ -41,7 +41,7 @@ export const exportToExcel = async () => {
     const exportData = payments.map(p => ({
       Miembro: nameMap[p.personId] || 'Miembro Eliminado',
       Monto: roundMoney(p.amount),
-      Fecha: p.date,
+      Fecha: p.date.slice(0, 10),
       Mes: getMonthName(p.month),
       Año: p.year,
       'ID Pago': p.id,

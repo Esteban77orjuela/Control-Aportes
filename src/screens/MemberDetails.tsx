@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Dimensions,
   Image,
   ActivityIndicator,
   Alert,
@@ -12,7 +11,6 @@ import {
 } from 'react-native';
 import { useRoute, RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BarChart } from 'react-native-chart-kit';
 import { Trash2, Edit2 } from 'lucide-react-native';
 import { usePersonById, useDeletePerson } from '../hooks/usePeople';
 import { usePaymentsByPerson, useDeletePayment } from '../hooks/usePayments';
@@ -23,8 +21,6 @@ import AppVersion from '../components/AppVersion';
 
 type MemberDetailsRouteProp = RouteProp<RootStackParamList, 'MemberDetails'>;
 type MemberDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MemberDetails'>;
-
-const screenWidth = Dimensions.get('window').width;
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MONTHS_FULL = [
@@ -41,6 +37,14 @@ const MONTHS_FULL = [
   'Noviembre',
   'Diciembre',
 ];
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
 export default function MemberDetails() {
   const route = useRoute<MemberDetailsRouteProp>();
@@ -91,7 +95,7 @@ export default function MemberDetails() {
   const handleDeletePayment = (payment: Payment) => {
     Alert.alert(
       'Eliminar Pago',
-      `¿Eliminar el aporte de ${MONTHS_FULL[payment.month]} ${payment.year} por $${payment.amount}?`,
+      `¿Eliminar el aporte de ${MONTHS_FULL[payment.month]} ${payment.year} por ${formatCurrency(payment.amount)}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -209,27 +213,50 @@ export default function MemberDetails() {
     );
   };
 
-  const getChartData = () => {
-    // Last 6 months
-    const data = [0, 0, 0, 0, 0, 0];
-    const labels = [];
+  const renderAnnualSummary = () => {
     const today = new Date();
+    const year = today.getFullYear();
+    const currentMonth = today.getMonth();
 
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      labels.push(MONTHS[d.getMonth()]);
+    const monthTotals = MONTHS_FULL.map((_, index) =>
+      payments
+        .filter(p => p.month === index && p.year === year)
+        .reduce((sum, p) => sum + p.amount, 0)
+    );
+    const yearTotal = monthTotals.reduce((sum, total) => sum + total, 0);
+    const maxMonthTotal = Math.max(...monthTotals, 0);
 
-      // aggregate
-      const total = payments
-        .filter(p => p.month === d.getMonth() && p.year === d.getFullYear())
-        .reduce((sum, p) => sum + p.amount, 0);
-      data[5 - i] = total;
-    }
+    return (
+      <View style={styles.summaryCard}>
+        <View style={styles.yearTotalRow}>
+          <Text style={styles.yearTotalLabel}>Total {year}</Text>
+          <Text style={styles.yearTotalValue}>{formatCurrency(yearTotal)}</Text>
+        </View>
+        {MONTHS_FULL.map((monthName, index) => {
+          const monthTotal = monthTotals[index];
+          const hasPayment = monthTotal > 0;
+          const isFuture = index > currentMonth;
+          const barWidth =
+            hasPayment && maxMonthTotal > 0
+              ? (`${Math.round((monthTotal / maxMonthTotal) * 100)}%` as const)
+              : '0%';
 
-    return {
-      labels: labels,
-      datasets: [{ data }],
-    };
+          return (
+            <View key={index} style={styles.summaryRow}>
+              <Text style={[styles.summaryMonth, isFuture && styles.summaryMonthFuture]}>
+                {monthName}
+              </Text>
+              <View style={styles.summaryBarTrack}>
+                {hasPayment && <View style={[styles.summaryBarFill, { width: barWidth }]} />}
+              </View>
+              <Text style={[styles.summaryAmount, !hasPayment && styles.summaryAmountEmpty]}>
+                {hasPayment ? formatCurrency(monthTotal) : '—'}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
   };
 
   const renderPaymentItem = ({ item }: { item: Payment }) => {
@@ -247,7 +274,7 @@ export default function MemberDetails() {
             </Text>
             <Text style={styles.paymentDate}>{item.date.slice(0, 10)}</Text>
           </View>
-          <Text style={styles.paymentAmount}>${item.amount}</Text>
+          <Text style={styles.paymentAmount}>{formatCurrency(item.amount)}</Text>
         </View>
         <Text style={styles.signatureLabel}>Firma:</Text>
         <View style={styles.signaturePreview}>
@@ -323,25 +350,8 @@ export default function MemberDetails() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Historial Reciente</Text>
-        <BarChart
-          data={getChartData()}
-          width={screenWidth - 40}
-          height={220}
-          yAxisLabel="$"
-          chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(79, 70, 229, ${opacity})`, // Primary color
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            style: { borderRadius: 16 },
-          }}
-          style={styles.chart}
-          yAxisSuffix=""
-          fromZero
-        />
+        <Text style={styles.sectionTitle}>Resumen Anual {new Date().getFullYear()}</Text>
+        {renderAnnualSummary()}
       </View>
 
       <View style={styles.section}>
@@ -442,10 +452,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
   },
-  chart: {
-    borderRadius: 16,
-    ...theme.shadows.card,
-  },
   paymentCard: {
     // Renamed from paymentItem to avoid conflict or confusion
     backgroundColor: '#fff',
@@ -453,6 +459,68 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  summaryCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  yearTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  yearTotalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  yearTotalValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.success,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  summaryMonth: {
+    width: 70,
+    fontSize: 12,
+    color: theme.colors.text,
+  },
+  summaryMonthFuture: {
+    color: '#9CA3AF',
+  },
+  summaryBarTrack: {
+    flex: 1,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F3F4F6',
+    marginHorizontal: 8,
+    overflow: 'hidden',
+  },
+  summaryBarFill: {
+    height: '100%',
+    borderRadius: 5,
+    backgroundColor: theme.colors.success,
+  },
+  summaryAmount: {
+    width: 90,
+    textAlign: 'right',
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  summaryAmountEmpty: {
+    color: '#9CA3AF',
   },
   paymentHeader: {
     flexDirection: 'row',
