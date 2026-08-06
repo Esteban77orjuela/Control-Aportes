@@ -19,6 +19,7 @@ import { usePaymentsByPerson, useDeletePayment } from '../hooks/usePayments';
 import { StorageRepository } from '../data/repositories/StorageRepository';
 import { Person, Payment, RootStackParamList } from '../types';
 import { theme } from '../styles/theme';
+import AppVersion from '../components/AppVersion';
 
 type MemberDetailsRouteProp = RouteProp<RootStackParamList, 'MemberDetails'>;
 type MemberDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MemberDetails'>;
@@ -358,6 +359,7 @@ export default function MemberDetails() {
       <View style={styles.footer}>
         <Text style={styles.footerText}>© {new Date().getFullYear()} Control de Aportes</Text>
         <Text style={styles.footerSubText}>Todos los derechos reservados por Esteban Orjuela</Text>
+        <AppVersion />
       </View>
     </ScrollView>
   );

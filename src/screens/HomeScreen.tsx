@@ -27,6 +27,7 @@ import * as Updates from 'expo-updates';
 import { RootStackParamList } from '../types';
 import { theme } from '../styles/theme';
 import { useHomeController } from '../hooks/useHomeController';
+import AppVersion from '../components/AppVersion';
 
 const { width } = Dimensions.get('window');
 
@@ -240,6 +241,7 @@ export default function HomeScreen() {
           <View style={styles.footerLine} />
           <Text style={styles.footerText}>© {new Date().getFullYear()} Control de Aportes</Text>
           <Text style={styles.footerSub}>Desarrollado por Esteban Orjuela</Text>
+          <AppVersion />
         </View>
       </ScrollView>
     </View>

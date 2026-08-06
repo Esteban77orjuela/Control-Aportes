@@ -28,6 +28,7 @@ import { theme } from '../styles/theme';
 import { useDashboardController } from '../hooks/useDashboardController';
 import { usePeople } from '../hooks/usePeople';
 import { usePayments } from '../hooks/usePayments';
+import AppVersion from '../components/AppVersion';
 
 type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -215,6 +216,7 @@ export default function Dashboard() {
               <Text style={styles.footerSubText}>
                 Todos los derechos reservados por Esteban Orjuela
               </Text>
+              <AppVersion />
             </View>
           }
         />
