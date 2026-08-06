@@ -26,6 +26,20 @@ type MemberDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList,
 const screenWidth = Dimensions.get('window').width;
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const MONTHS_FULL = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
 
 export default function MemberDetails() {
   const route = useRoute<MemberDetailsRouteProp>();
@@ -72,6 +86,36 @@ export default function MemberDetails() {
       ]
     );
   };
+
+  const handleDeletePayment = (payment: Payment) => {
+    Alert.alert(
+      'Eliminar Pago',
+      `¿Eliminar el aporte de ${MONTHS_FULL[payment.month]} ${payment.year} por $${payment.amount}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePaymentMutation.mutateAsync(payment.id);
+            } catch (e: any) {
+              Alert.alert(
+                'Error',
+                `No se pudo eliminar el pago.${e?.message ? ` ${e.message}` : ''}`
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const duplicateKeys = new Set<string>(
+    payments
+      .map(p => `${p.month}-${p.year}`)
+      .filter((key, index, arr) => arr.indexOf(key) !== index)
+  );
 
   const renderStatusGrid = () => {
     const currentMonth = new Date().getMonth();
@@ -190,10 +234,18 @@ export default function MemberDetails() {
   const renderPaymentItem = ({ item }: { item: Payment }) => {
     const signatureUri =
       item.signatureBase64 || StorageRepository.getSignatureUrl(item.signaturePath || '');
+    const monthKey = `${item.month}-${item.year}`;
+    const isDuplicate = duplicateKeys.has(monthKey);
     return (
       <View style={styles.paymentCard}>
         <View style={styles.paymentHeader}>
-          <Text style={styles.paymentDate}>{item.date}</Text>
+          <View>
+            <Text style={styles.paymentMonth}>
+              {MONTHS_FULL[item.month]} {item.year}
+              {isDuplicate && <Text style={styles.duplicateBadge}> Duplicado</Text>}
+            </Text>
+            <Text style={styles.paymentDate}>{item.date.slice(0, 10)}</Text>
+          </View>
           <Text style={styles.paymentAmount}>${item.amount}</Text>
         </View>
         <Text style={styles.signatureLabel}>Firma:</Text>
@@ -202,6 +254,29 @@ export default function MemberDetails() {
             source={{ uri: signatureUri }}
             style={{ width: '100%', height: 80, resizeMode: 'contain' }}
           />
+        </View>
+        <View style={styles.paymentActions}>
+          <TouchableOpacity
+            style={styles.actionBtnEdit}
+            onPress={() =>
+              navigation.navigate('NewPayment', {
+                personId,
+                month: item.month,
+                year: item.year,
+                editPaymentId: item.id,
+              })
+            }
+          >
+            <Edit2 size={16} color={theme.colors.primary} />
+            <Text style={styles.actionTextEdit}>Editar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionBtnDelete}
+            onPress={() => handleDeletePayment(item)}
+          >
+            <Trash2 size={16} color={theme.colors.error} />
+            <Text style={styles.actionTextDelete}>Eliminar</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -385,9 +460,53 @@ const styles = StyleSheet.create({
   paymentDate: {
     color: theme.colors.textSecondary,
   },
+  paymentMonth: {
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    fontSize: 16,
+  },
+  duplicateBadge: {
+    color: theme.colors.error,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   paymentAmount: {
     fontWeight: 'bold',
     color: theme.colors.success,
+  },
+  paymentActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: 10,
+  },
+  actionBtnEdit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 6,
+  },
+  actionTextEdit: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  actionBtnDelete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.error,
+    borderRadius: 6,
+  },
+  actionTextDelete: {
+    color: theme.colors.error,
+    fontWeight: '600',
   },
   signatureLabel: {
     fontSize: 12,

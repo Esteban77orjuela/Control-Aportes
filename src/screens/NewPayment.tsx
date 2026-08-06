@@ -135,6 +135,8 @@ export default function NewPayment() {
   };
 
   const onSave = async (signatureBase64: string) => {
+    if (saving) return;
+
     const selectedDate = new Date(date.slice(0, 10) + 'T12:00:00');
     const parsedAmount = parseMoneyInput(amount);
 
