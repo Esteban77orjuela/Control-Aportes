@@ -34,7 +34,6 @@
     "expo-constants": "~18.0.14",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.24",
-    "idb": "^8.0.3",
     "lucide-react": "^1.38.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -48,7 +47,6 @@
     "react-native-web": "^0.21.0",
     "signature_pad": "^5.1.4",
     "uuid": "^14.0.0",
-    "workbox-window": "^7.4.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -59,7 +57,6 @@
     "@types/jest": "29.5.14",
     "@types/react": "~19.1.0",
     "@types/signature_pad": "^2.3.6",
-    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.1",
     "babel-jest": "^30.3.0",
