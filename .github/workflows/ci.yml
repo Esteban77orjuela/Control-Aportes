@@ -1,34 +1,61 @@
-name: React Native Expo CI
+name: PWA CI - Calidad
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   test-and-lint:
-    name: 🧪 Control de Calidad (QA)
+    name: Calidad (lint + typecheck + tests)
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Clonar repositorio
-        uses: actions/checkout@v4
+      - name: Clonar repositorio
+        uses: actions/checkout@v5
 
-      - name: ⚙️ Configurar Node.js
-        uses: actions/setup-node@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
-      - name: 📦 Instalar dependencias
-        run: npm ci || npm install
+      - name: Instalar dependencias
+        run: npm ci
 
-      - name: 🔍 Auditoría de Seguridad (npm audit)
-        run: npm audit --audit-level=high --omit=dev || echo "Vulnerabilidades encontradas. Revisar."
+      - name: Auditoria de dependencias (aviso, no bloqueante)
+        run: |
+          npm audit --omit=dev --audit-level=high || {
+            MSG=$(npm audit --omit=dev --json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);const v=j.metadata.vulnerabilities;console.log('baseline: '+v.total+' total ('+v.high+' high, '+v.critical+' critical) en toolchain Expo/sheetjs sin fix aguas arriba. Ver docs/SEGURIDAD.md.')}catch(e){console.log('baseline: ver docs/SEGURIDAD.md')}})")
+            echo "AVISO: $MSG"
+          }
 
-      - name: 🧹 Ejecutar Linter (ESLint)
+      - name: Linter (ESLint)
         run: npm run lint
 
-      - name: 🧪 Ejecutar Pruebas Unitarias (Jest)
-        run: npm run test
+      - name: TypeScript (typecheck)
+        run: npm run typecheck
+
+      - name: Pruebas unitarias (Jest)
+        run: npm test
+
+  build-web:
+    name: Build PWA (expo export + workbox)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v5
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar la PWA (expo export + workbox injectManifest)
+        run: npm run pwa:build
