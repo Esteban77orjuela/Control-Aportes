@@ -11,16 +11,36 @@ DROP POLICY IF EXISTS "Usuarios ven solo sus pagos" ON payments;
 DROP POLICY IF EXISTS "Todo para autenticados en people" ON people;
 DROP POLICY IF EXISTS "Usuarios ven solo sus personas" ON people;
 
-DROP POLICY IF EXISTS "Todo para autenticados en youths" ON youths;
+-- Guard: en una BD fresca estas tablas aún no existen (se crean en la migración
+-- 0012). Sin este guard, `DROP POLICY ... ON youth` lanzaría un error de
+-- "relation does not exist" y abortaría toda la secuencia de migraciones.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'youths') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Todo para autenticados en youths" ON youths';
+  END IF;
+END $$;
 
-DROP POLICY IF EXISTS "Todo para autenticados en retreat_savings" ON retreat_savings;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'retreat_savings') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Todo para autenticados en retreat_savings" ON retreat_savings';
+  END IF;
+END $$;
 
-DROP POLICY IF EXISTS "Todo para autenticados en audit_logs" ON audit_logs;
-DROP POLICY IF EXISTS "Users manage own audit_logs" ON audit_logs;
-CREATE POLICY "Users manage own audit_logs"
-ON audit_logs FOR ALL
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'audit_logs') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Todo para autenticados en audit_logs" ON audit_logs';
+    EXECUTE 'DROP POLICY IF EXISTS "Users manage own audit_logs" ON audit_logs';
+    EXECUTE '
+      CREATE POLICY "Users manage own audit_logs"
+      ON audit_logs FOR ALL
+      USING (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id)
+    ';
+  END IF;
+END $$;
 
 DROP POLICY IF EXISTS "Usuarios ven solo sus bebidas" ON beverages;
 
