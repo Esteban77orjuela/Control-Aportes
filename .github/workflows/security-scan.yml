@@ -1,0 +1,32 @@
+name: Escaneo de Seguridad Semanal
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: npm audit completo
+        run: npm audit --omit=dev || true
+
+      - name: Generar reporte
+        run: |
+          echo "# Reporte de Seguridad - $(date)" > security-report.md
+          npm audit --omit=dev >> security-report.md || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md

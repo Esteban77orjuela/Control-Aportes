@@ -1,0 +1,105 @@
+{
+  "expo": {
+    "name": "Control Aportes",
+    "slug": "control-aportes",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "static",
+      "manifest": {
+        "name": "Control Aportes",
+        "short_name": "Aportes",
+        "description": "Gestión de aportes, bebidas y ahorros para retiros",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#4F46E5",
+        "theme_color": "#4F46E5",
+        "orientation": "portrait-primary",
+        "scope": "/",
+        "icons": [
+          {
+            "src": "/icons/icon-72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "/icons/icon-96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "/icons/icon-128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "/icons/icon-144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "/icons/icon-152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+          }
+        ],
+        "screenshots": [],
+        "categories": ["productivity", "finance"],
+        "shortcuts": [
+          {
+            "name": "Nuevo Aporte",
+            "short_name": "Aporte",
+            "description": "Registrar un nuevo aporte",
+            "url": "/music/new",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+          },
+          {
+            "name": "Nuevo Abono Retiro",
+            "short_name": "Retiro",
+            "description": "Registrar abono para retiro 2026",
+            "url": "/retreat/new",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+          }
+        ]
+      }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
