@@ -4,6 +4,7 @@ import { Youth, RetreatSaving } from '../../types';
 import { queueOfflineOperation } from '../../utils/offlineSync';
 import { roundMoney } from '../../utils/money';
 import { generateUUID } from '../../utils/uuid';
+import { isNetworkError } from '../../utils/errorGuards';
 
 export const RetreatRepository = {
   getYouths: async (): Promise<Youth[]> => {
@@ -71,9 +72,9 @@ export const RetreatRepository = {
         }
         throw error;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error saving youth:', e);
-      if (e.message?.includes('fetch') || e.message?.includes('network')) {
+      if (isNetworkError(e)) {
         const user = await getAuthenticatedUserOrThrow();
         await queueOfflineOperation({
           table: 'youths',
@@ -209,9 +210,9 @@ export const RetreatRepository = {
         }
         throw error;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error saving retreat saving:', e);
-      if (e.message?.includes('fetch') || e.message?.includes('network')) {
+      if (isNetworkError(e)) {
         const user = await getAuthenticatedUserOrThrow();
         await queueOfflineOperation({
           table: 'retreat_savings',

@@ -6,7 +6,7 @@ import { roundMoney } from './money';
 
 // Polyfill necesario para que XLSX funcione en React Native
 if (typeof global.Buffer === 'undefined') {
-  (global as any).Buffer = Buffer;
+  (global as typeof globalThis & { Buffer?: typeof Buffer }).Buffer = Buffer;
 }
 
 /**
@@ -66,9 +66,10 @@ export const exportToExcel = async () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     Alert.alert('¡Exportado!', `${fileName} descargado.`);
-  } catch (error: any) {
-    console.error('Error CRÍTICO al exportar Excel:', error);
-    Alert.alert('Error de Exportación', `Detalle: ${error.message || JSON.stringify(error)}`);
+  } catch (e: unknown) {
+    console.error('Error CRÍTICO al exportar Excel:', e);
+    const detail = e instanceof Error ? e.message : JSON.stringify(e);
+    Alert.alert('Error de Exportación', `Detalle: ${detail}`);
   }
 };
 

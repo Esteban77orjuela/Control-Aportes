@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { Person, Payment } from '../types';
-import { queueOfflineOperation } from './offlineSync';
 
 const STORAGE_KEYS = {
   PEOPLE: '@app:people',

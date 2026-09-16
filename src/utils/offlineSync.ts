@@ -3,14 +3,15 @@ import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '../lib/supabase';
 import { StorageRepository } from '../data/repositories/StorageRepository';
 import { generateUUID } from './uuid';
+import { errorMessage } from './errorGuards';
 
 // Cada operación pendiente será un objeto con esta estructura
 export interface PendingOperation {
     id: string;          // ID único para la operación
     table: string;       // Tabla en Supabase
     method: 'INSERT' | 'UPDATE' | 'DELETE' | 'RPC';
-    data: any;           // El objeto a insertar/actualizar
-    filters?: { [key: string]: any }; // Para UPDATE/DELETE
+    data: Record<string, unknown>;   // El objeto a insertar/actualizar
+    filters?: Record<string, unknown>; // Para UPDATE/DELETE
     rpcName?: string;    // Nombre del procedimiento almacenado
     createdAt: string;   // Fecha de creación
     retryCount?: number; // Cuántas veces ha fallado
@@ -45,7 +46,7 @@ export const getOfflineQueue = async (): Promise<PendingOperation[]> => {
     try {
         const queueJson = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
         return queueJson ? JSON.parse(queueJson) : [];
-    } catch (e) {
+    } catch {
         return [];
     }
 };
@@ -72,8 +73,8 @@ export const syncOfflineOperations = async (): Promise<{ success: boolean; proce
             // primero debemos subirla a Storage antes de insertar en la DB.
             if (op.data.signature_base64 && !op.data.signature_path) {
                 try {
-                    const prefix = op.table === 'retreat_savings' ? `youth_${op.data.youth_id}` : 'payment';
-                    const path = await StorageRepository.uploadSignature(op.data.signature_base64, prefix);
+                    const prefix = op.table === 'retreat_savings' ? `youth_${String(op.data.youth_id)}` : 'payment';
+                    const path = await StorageRepository.uploadSignature(op.data.signature_base64 as string, prefix);
                     op.data.signature_path = path;
                     delete op.data.signature_base64; // Limpiar para que la DB no reciba el texto pesado
                 } catch (storageErr) {
@@ -122,8 +123,8 @@ export const syncOfflineOperations = async (): Promise<{ success: boolean; proce
             } else {
                 throw error;
             }
-        } catch (e: any) {
-            console.error(`❌ Fallo en op ${op.id}:`, e.message || e);
+        } catch (e: unknown) {
+            console.error(`❌ Fallo en op ${op.id}:`, errorMessage(e));
             op.retryCount = (op.retryCount || 0) + 1;
             
             // Si ha fallado demasiadas veces por errores de lógica (no de red),

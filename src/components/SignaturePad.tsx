@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import SignaturePad from 'signature_pad';
 
@@ -64,10 +64,10 @@ export const SignaturePadComponent = forwardRef<SignaturePadRef, SignaturePadPro
       };
 
       if (onBegin) {
-        options.onBegin = (event: MouseEvent) => onBegin();
+        options.onBegin = (_event: MouseEvent) => onBegin();
       }
       if (onEnd) {
-        options.onEnd = (event: MouseEvent) => onEnd();
+        options.onEnd = (_event: MouseEvent) => onEnd();
       }
 
       padRef.current = new SignaturePad(canvas, options);
@@ -85,7 +85,7 @@ export const SignaturePadComponent = forwardRef<SignaturePadRef, SignaturePadPro
       };
     }, [width, height, penColor, backgroundColor, disabled, onBegin, onEnd]);
 
-    const resize = () => {
+    const resize = useCallback(() => {
       if (!canvasRef.current || !padRef.current) return;
       const canvas = canvasRef.current;
       const ratio = window.devicePixelRatio || 1;
@@ -102,12 +102,12 @@ export const SignaturePadComponent = forwardRef<SignaturePadRef, SignaturePadPro
       }
 
       padRef.current.fromData(data);
-    };
+    }, [width, height]);
 
     useEffect(() => {
       window.addEventListener('resize', resize);
       return () => window.removeEventListener('resize', resize);
-    }, [width, height]);
+    }, [resize]);
 
     useImperativeHandle(ref, () => ({
       getSignature: () => padRef.current?.toDataURL('image/png') || '',

@@ -4,6 +4,18 @@ import { Payment } from '../../types';
 import { queueOfflineOperation } from '../../utils/offlineSync';
 import { roundMoney } from '../../utils/money';
 import { generateUUID } from '../../utils/uuid';
+import { isNetworkError } from '../../utils/errorGuards';
+
+interface PaymentRow {
+  id: string;
+  person_id: string;
+  amount: number;
+  date: string;
+  month: number;
+  year: number;
+  signature_base64?: string | null;
+  signature_path?: string | null;
+}
 
 export const PaymentRepository = {
   getAll: async (includeSignature: boolean = false): Promise<Payment[]> => {
@@ -20,11 +32,14 @@ export const PaymentRepository = {
         .is('deleted_at', null)
         .order('date', { ascending: false });
 
-      const { data, error } = (await query) as { data: any[] | null; error: any };
+      const { data, error } = (await query) as unknown as {
+        data: PaymentRow[] | null;
+        error: { message: string } | null;
+      };
 
       if (error) throw error;
 
-      return (data || []).map((p: any) => ({
+      return (data || []).map((p: PaymentRow) => ({
         id: p.id,
         personId: p.person_id,
         amount: roundMoney(Number(p.amount)),
@@ -32,7 +47,7 @@ export const PaymentRepository = {
         month: p.month,
         year: p.year,
         signatureBase64: p.signature_base64 || '',
-        signaturePath: p.signature_path,
+        signaturePath: p.signature_path ?? undefined,
       }));
     } catch (e) {
       console.error('Error reading payments from Supabase', e);
@@ -59,11 +74,13 @@ export const PaymentRepository = {
       throw new Error('Datos de pago inválidos: falta la fecha.');
     }
 
+    const paymentId = generateUUID(); // Fase 6: Idempotencia (mismo ID en insert y reintento offline)
+
     try {
       const user = await getAuthenticatedUserOrThrow();
       const { error } = await supabase.from('payments').insert([
         {
-          id: generateUUID(), // Fase 6: Idempotencia
+          id: paymentId,
           person_id: payment.personId,
           amount: normalizedAmount,
           date: payment.date,
@@ -81,7 +98,7 @@ export const PaymentRepository = {
             table: 'payments',
             method: 'INSERT',
             data: {
-              id: generateUUID(),
+              id: paymentId,
               person_id: payment.personId,
               amount: normalizedAmount,
               date: payment.date,
@@ -96,15 +113,15 @@ export const PaymentRepository = {
         }
         throw error;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error saving payment to Supabase', e);
-      if (e.message?.includes('fetch') || e.message?.includes('network')) {
+      if (isNetworkError(e)) {
         const user = await getAuthenticatedUserOrThrow();
         await queueOfflineOperation({
           table: 'payments',
           method: 'INSERT',
           data: {
-            id: generateUUID(),
+            id: paymentId,
             person_id: payment.personId,
             amount: normalizedAmount,
             date: payment.date,

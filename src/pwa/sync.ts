@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
-import { db, OfflineOperation, getOfflineOperations, removeOfflineOperation, updateOfflineOperation, getOfflineQueueCount, addOfflineOperation } from './db';
+import { OfflineOperation, getOfflineOperations, removeOfflineOperation, updateOfflineOperation, getOfflineQueueCount, addOfflineOperation } from './db';
 import { StorageRepository } from '@/data/repositories/StorageRepository';
+import { errorMessage } from '@/utils/errorGuards';
 
 interface SyncResult {
   success: boolean;
@@ -31,8 +32,8 @@ export const syncOfflineOperations = async (): Promise<SyncResult> => {
 
       if (op.method === 'INSERT' && op.data.signature_base64 && !op.data.signature_path) {
         try {
-          const prefix = op.table === 'retreat_savings' ? `youth_${op.data.youth_id}` : 'payment';
-          const path = await StorageRepository.uploadSignature(op.data.signature_base64, prefix);
+          const prefix = op.table === 'retreat_savings' ? `youth_${String(op.data.youth_id)}` : 'payment';
+          const path = await StorageRepository.uploadSignature(op.data.signature_base64 as string, prefix);
           op.data.signature_path = path;
           delete op.data.signature_base64;
         } catch (storageErr) {
@@ -80,10 +81,11 @@ export const syncOfflineOperations = async (): Promise<SyncResult> => {
       } else {
         throw error;
       }
-    } catch (e: any) {
-      console.error(`❌ Fallo en op ${op.id}:`, e.message || e);
+    } catch (e: unknown) {
+      const message = errorMessage(e);
+      console.error(`❌ Fallo en op ${op.id}:`, message);
       const newRetryCount = (op.retryCount || 0) + 1;
-      details.push({ id: op.id, success: false, error: e.message });
+      details.push({ id: op.id, success: false, error: message });
 
       if (newRetryCount >= 5) {
         console.warn(`Operación ${op.id} falló 5 veces, manteniendo en cola para revisión manual`);
@@ -124,7 +126,10 @@ export const registerBackgroundSync = async (): Promise<void> => {
   if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
     try {
       const registration = await navigator.serviceWorker.ready;
-      await (registration as any).sync.register('offline-sync');
+      const registrationWithSync = registration as ServiceWorkerRegistration & {
+        sync: { register: (tag: string) => Promise<void> };
+      };
+      await registrationWithSync.sync.register('offline-sync');
       console.log('Background Sync registrado');
     } catch (error) {
       console.warn('Background Sync no disponible:', error);

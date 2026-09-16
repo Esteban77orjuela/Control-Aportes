@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
  * Registra cada acción crítica para auditorías financieras futuras.
  */
 export const AuditRepository = {
-    log: async (action: string, tableName: string, recordId: string, oldData?: any, newData?: any) => {
+    log: async (action: string, tableName: string, recordId: string, oldData?: unknown, newData?: unknown) => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;

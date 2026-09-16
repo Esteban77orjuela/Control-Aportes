@@ -5,8 +5,8 @@ export interface OfflineOperation {
   id: string;
   table: string;
   method: 'INSERT' | 'UPDATE' | 'DELETE' | 'RPC';
-  data: any;
-  filters?: Record<string, any>;
+  data: Record<string, unknown>;
+  filters?: Record<string, unknown>;
   rpcName?: string;
   createdAt: string;
   retryCount?: number;
@@ -14,7 +14,7 @@ export interface OfflineOperation {
 
 export interface CachedData {
   key: string;
-  data: any;
+  data: unknown;
   timestamp: number;
   version: number;
 }
@@ -98,11 +98,11 @@ export const clearOfflineQueue = async (): Promise<void> => {
   await db.offlineQueue.clear();
 };
 
-export const setCache = async (key: string, data: any, version = 1): Promise<void> => {
+export const setCache = async (key: string, data: unknown, version = 1): Promise<void> => {
   await db.cache.put({ key, data, timestamp: Date.now(), version });
 };
 
-export const getCache = async (key: string): Promise<any | null> => {
+export const getCache = async (key: string): Promise<unknown | null> => {
   const entry = await db.cache.get(key);
   return entry?.data ?? null;
 };

@@ -4,6 +4,7 @@ import { Beverage, BeverageSale } from '../../types';
 import { queueOfflineOperation } from '../../utils/offlineSync';
 import { roundMoney } from '../../utils/money';
 import { generateUUID } from '../../utils/uuid';
+import { isNetworkError } from '../../utils/errorGuards';
 
 export const BeverageRepository = {
   getAll: async (): Promise<Beverage[]> => {
@@ -71,9 +72,9 @@ export const BeverageRepository = {
         }
         throw error;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error saving beverage to Supabase:', e);
-      if (e.message?.includes('fetch') || e.message?.includes('network')) {
+      if (isNetworkError(e)) {
         const user = await getAuthenticatedUserOrThrow();
         await queueOfflineOperation({
           table: 'beverages',
@@ -170,9 +171,9 @@ export const BeverageRepository = {
         }
         throw error;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error recargando stock:', e);
-      if (e.message?.includes('fetch') || e.message?.includes('network')) {
+      if (isNetworkError(e)) {
         await queueOfflineOperation({
           table: 'beverages',
           method: 'RPC',
@@ -242,9 +243,9 @@ export const BeverageSalesRepository = {
         }
         throw error;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error registrando venta:', e);
-      if (e.message?.includes('fetch') || e.message?.includes('network')) {
+      if (isNetworkError(e)) {
         const user = await getAuthenticatedUserOrThrow();
         // Reintento idempotente: mismo p_sale_id, el servidor no descontará stock dos veces
         await queueOfflineOperation({

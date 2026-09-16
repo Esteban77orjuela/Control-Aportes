@@ -8,15 +8,23 @@ export interface ValidationResult {
     errors: Record<string, string>;
 }
 
+interface YouthValidationInput {
+    name?: string;
+    targetAmount?: number;
+    phone?: string;
+    birthDate?: string;
+}
+
 export const YouthValidator = {
-    validate: (data: any): ValidationResult => {
+    validate: (data: YouthValidationInput): ValidationResult => {
         const errors: Record<string, string> = {};
 
         if (!data.name || data.name.trim().length < 3) {
             errors.name = 'El nombre debe tener al menos 3 caracteres.';
         }
 
-        if (data.targetAmount <= 0) {
+        const targetAmount = data.targetAmount;
+        if (!targetAmount || targetAmount <= 0) {
             errors.targetAmount = 'La meta de ahorro debe ser un monto positivo.';
         }
 

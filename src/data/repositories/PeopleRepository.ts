@@ -3,6 +3,7 @@ import { getAuthenticatedUserOrThrow } from '../../lib/authGuard';
 import { Person } from '../../types';
 import { queueOfflineOperation } from '../../utils/offlineSync';
 import { generateUUID } from '../../utils/uuid';
+import { isNetworkError } from '../../utils/errorGuards';
 
 export const PeopleRepository = {
   getAll: async (): Promise<Person[]> => {
@@ -35,11 +36,13 @@ export const PeopleRepository = {
   },
 
   save: async (person: Person): Promise<void> => {
+    const personId = person.id || generateUUID();
+
     try {
       const user = await getAuthenticatedUserOrThrow();
       const { error } = await supabase.from('people').insert([
         {
-          id: person.id || generateUUID(),
+          id: personId,
           name: person.name,
           email: person.email,
           phone: person.phone,
@@ -53,7 +56,7 @@ export const PeopleRepository = {
             table: 'people',
             method: 'INSERT',
             data: {
-              id: person.id || generateUUID(),
+              id: personId,
               name: person.name,
               email: person.email,
               phone: person.phone,
@@ -64,14 +67,14 @@ export const PeopleRepository = {
         }
         throw error;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error saving person to Supabase', e);
-      if (e.message?.includes('fetch') || e.message?.includes('network')) {
+      if (isNetworkError(e)) {
         const user = await getAuthenticatedUserOrThrow();
         await queueOfflineOperation({
           table: 'people',
           method: 'INSERT',
-          data: { name: person.name, email: person.email, phone: person.phone, user_id: user.id },
+          data: { id: personId, name: person.name, email: person.email, phone: person.phone, user_id: user.id },
         });
         return;
       }

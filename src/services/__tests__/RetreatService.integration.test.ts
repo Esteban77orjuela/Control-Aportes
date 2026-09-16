@@ -34,12 +34,12 @@ describe('RetreatService - registerYouth', () => {
   });
 
   test('detecta g\u00e9nero femenino autom\u00e1ticamente', async () => {
-    let savedData: any;
+    let savedData: Parameters<typeof mockedRetreatRepository.saveYouth>[0] | undefined;
     mockedRetreatRepository.saveYouth.mockImplementation(async data => {
       savedData = data;
     });
     await RetreatService.registerYouth({ name: 'Camila', targetAmount: 60000 });
-    expect(savedData.gender).toBe('female');
+    expect(savedData?.gender).toBe('female');
   });
 
   test('lanza error si el nombre es inv\u00e1lido', async () => {
