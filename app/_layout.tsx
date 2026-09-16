@@ -1,13 +1,13 @@
 import { Stack } from 'expo-router/build/layouts/Stack';
-import { Providers } from './providers';
+import { AppProviders } from '../src/providers/AppProviders';
 
 export default function RootLayout() {
   return (
-    <Providers>
+    <AppProviders>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(app)" />
       </Stack>
-    </Providers>
+    </AppProviders>
   );
 }

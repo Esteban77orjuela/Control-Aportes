@@ -10,10 +10,10 @@ import { theme } from '@/styles/theme';
 
 export default function YouthDetails() {
     const router = useRouter();
-    const { youthId } = useLocalSearchParams<{ youthId: string }>();
+    const { id } = useLocalSearchParams<{ id: string }>();
 
-    const { data: youth, isLoading: loadingYouth } = useYouthById(youthId);
-    const { data: savings = [], isLoading: loadingSavings } = useRetreatSavingsByYouth(youthId);
+    const { data: youth, isLoading: loadingYouth } = useYouthById(id);
+    const { data: savings = [], isLoading: loadingSavings } = useRetreatSavingsByYouth(id);
     const { mutateAsync: deleteSaving } = useDeleteRetreatSaving();
     const { mutateAsync: deleteYouth } = useDeleteYouth();
 
@@ -52,7 +52,7 @@ export default function YouthDetails() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await deleteSaving({ id, youthId });
+                            await deleteSaving({ id, youthId: id });
                             Alert.alert('Eliminado', 'El abono fue eliminado correctamente.');
                         } catch (e: any) {
                             Alert.alert('Error', e?.message || 'No se pudo eliminar el abono.');
@@ -74,7 +74,7 @@ export default function YouthDetails() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await deleteYouth(youthId);
+                            await deleteYouth(id);
                             Alert.alert('Eliminado', 'El joven fue eliminado correctamente.', [
                                 { text: 'OK', onPress: () => router.back() },
                             ]);
@@ -153,7 +153,7 @@ export default function YouthDetails() {
                 <Text style={styles.sectionTitle}>Historial de Abonos</Text>
                 <TouchableOpacity
                     style={styles.addButton}
-                    onPress={() => router.push({ pathname: '/retreat/new', params: { preselectedYouthId: youthId } })}
+                    onPress={() => router.push({ pathname: '/retreat/new', params: { preselectedYouthId: id } })}
                 >
                     <Plus size={16} color="#fff" />
                     <Text style={styles.addButtonText}>Abonar</Text>
@@ -189,7 +189,7 @@ export default function YouthDetails() {
             <View style={styles.actions}>
                 <TouchableOpacity
                     style={[styles.actionButton, styles.editButton]}
-                    onPress={() => router.push({ pathname: '/retreat/edit', params: { youthId } })}
+                    onPress={() => router.push({ pathname: '/retreat/edit', params: { id } })}
                 >
                     <Pencil size={18} color="#fff" />
                     <Text style={styles.actionButtonText}>Editar Perfil</Text>

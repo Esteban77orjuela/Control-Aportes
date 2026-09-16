@@ -8,9 +8,9 @@ import { useYouthById, useUpdateYouth, useDeleteYouth } from '@/hooks/useRetreat
 
 export default function EditYouth() {
     const router = useRouter();
-    const { youthId } = useLocalSearchParams<{ youthId: string }>();
+    const { id } = useLocalSearchParams<{ id: string }>();
 
-    const { data: youth, isLoading } = useYouthById(youthId);
+    const { data: youth, isLoading } = useYouthById(id);
     const { mutateAsync: updateYouth, isPending } = useUpdateYouth();
     const { mutateAsync: deleteYouth } = useDeleteYouth();
 
