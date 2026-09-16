@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.2.0] — 2026-09-16
+### Migración completa a PWA web-only
+- Eliminada la capa de APK nativo (EAS, `android/`, `ios/`, expo-updates): la aplicación ahora se distribuye como PWA instalable desde el navegador
+- Ruteo y layouts migrados a Expo Router web (`app/`); `screens/` y navegadores antiguos eliminados
+- Service Worker con Workbox (`public/sw.js`) con precache automático: funciona offline una vez instalada
+- `providers.tsx` movido fuera de `app/` a `src/providers/AppProviders.tsx` (evita la ruta fantasma de expo-router)
+- Registro del service worker en producción (`src/pwa/registerSW.ts`)
+
+### Fiabilidad
+- Cola offline con IDs de cliente idempotentes (`PeopleRepository` y `PaymentRepository` ahora reutilizan el mismo ID en el insert y en el encolado; corregida la fuga de UUID vacío en el reintento de personas)
+- Corrección del módulo Retiro: el detalle y la edición de un joven usan el mismo parámetro (`id`) al navegar
+- ESLint en `src/` con 0 errores y 0 warnings; tipado eliminado de todos los `any` del dominio
+- Dependencias sin uso eliminadas (`workbox-window`, `idb`, `@types/uuid`)
+- Migración nueva `20260916_0012_consolidate_missing_tables.sql`: crea de forma idempotente `youths`, `retreat_savings`, `audit_logs` (RLS + políticas + índices) y añade `payments.signature_path`
+- `20260805_0006_fix_production_rls.sql` blindado con guards para permitir instalaciones limpias
+
+### CI/CD
+- Workflow unificado "PWA CI": audit (aviso), lint, typecheck, 60 tests y build completo de la PWA en cada push
+- `actions/checkout` y `actions/setup-node` actualizados a v5
+- Dockerfile y .dockerignore eliminados (ya no aplican a una PWA web)
+
 ## [1.1.0] — 2026-07-27
 ### EAS Update (actualizaciones OTA)
 - Instalado `expo-updates`

@@ -1,5 +1,14 @@
 # AUDITORÍA TÉCNICA — CONTROL DE APORTES
 
+> **Actualización (2026-09-16):** desde esta auditoría la aplicación dejó de ser un
+> APK y se migró a **PWA web-only** (ver `docs/DECISIONES_TECNICAS.md` y
+> `CHANGELOG.md` [1.2.0]). Se creó `.git` y el historial ahora vive en GitHub
+> (`Esteban77orjuela/Control-Aportes`). El módulo Retiro corrigió la navegación
+> (`id` vs `youthId`) y la cola offline es idempotente. El esquema de `youths`,
+> `retreat_savings` y `audit_logs` está versionado en
+> `20260916_0012_consolidate_missing_tables.sql`. Algunas secciones de este informe
+> (APK, docker, expo-updates) quedaron obsoletas y se mantienen solo como historial.
+
 **Fecha:** 14/09/2026 · **Base:** código en `C:\Programacion\Cuotas2\Control-Aportes-main` (verificado archivo por archivo).
 **Nota:** No existe carpeta `.git` local → no hay historial de commits comprobable. Los datos de versión vienen de `CHANGELOG.md` y nombres de migraciones.
 
