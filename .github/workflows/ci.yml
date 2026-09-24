@@ -79,7 +79,17 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Comprobar credenciales de Netlify
+        id: netlify-creds
+        run: |
+          if [ -z "${{ secrets.NETLIFY_AUTH_TOKEN }}" ] || [ -z "${{ secrets.NETLIFY_SITE_ID }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Compilar la PWA con configuración de producción
+        if: steps.netlify-creds.outputs.skip != 'true'
         run: npm run pwa:build
         env:
           APP_ENV: production
@@ -87,6 +97,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Publicar en Netlify
+        if: steps.netlify-creds.outputs.skip != 'true'
         run: npx @netlify/cli deploy --prod --dir=dist
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
