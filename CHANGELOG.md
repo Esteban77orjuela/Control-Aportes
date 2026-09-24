@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.1] — 2026-09-24
+### Seguridad y observabilidad
+- `ErrorBoundary` de clase que registra errores no capturados en Sentry sin romper la interfaz (integrado en `AppProviders`)
+- Migración `0013`: registro por invitación (`signup_allowlist`) con trigger sobre `auth.users`
+- Migración `0014`: bucket `signatures` idempotente con subida solo para usuarios autenticados
+- `docs/SEGURIDAD.md` y `docs/DECISIONES_TECNICAS.md` (D08, D09) actualizados
+
+### Calidad
+- 8 pruebas nuevas sobre la capa de datos y la sincronización offline (`PaymentRepository`, `PeopleRepository`, `offlineSync`); total **68 tests en 9 suites**
+
+### Despliegue
+- `netlify.toml` + job `deploy-netlify` en CI: publica la PWA en Netlify al hacer push a main (se omite si no hay credenciales configuradas)
+
+### Mantenimiento
+- Keep-alive de Supabase migrado a `cron-job.org` (cada 3 horas): deja de depender del cron de GitHub y de la tarea local
+- Eliminado `keep-supabase-active.yml`; receta completa en `docs/KEEP_ALIVE.md`
+
 ## [1.2.0] — 2026-09-16
 ### Migración completa a PWA web-only
 - Eliminada la capa de APK nativo (EAS, `android/`, `ios/`, expo-updates): la aplicación ahora se distribuye como PWA instalable desde el navegador

@@ -91,19 +91,24 @@ procedimiento para volver a ejecutarlo en otros entornos.
 
 ## D06 — Keep-alive del plan free de Supabase
 
-**Contexto.** Supabase pausa proyectos gratuitos por inactividad (≈1 semana), y una
-app de congregación puede no tener tráfico diario.
+**Contexto.** Supabase pausa proyectos gratuitos por inactividad (≈1 semana); una app
+de congregación puede no tener tráfico diario. La actividad que cuenta es la que llega
+a Postgres ("unas pocas consultas al día", según la documentación oficial).
 
-**Decisión.** Workflow de GitHub Actions (`keep-supabase-active.yml`) que dispara una
-petición autenticada al proyecto los lunes y jueves y verifica HTTP 200. Como la
-política de ejecuciones programadas de GitHub tiene límites, se agregó además una
-tarea programada local para los días intermedios.
+**Decisión.** Llamada a la función RPC `keep_alive()` (migración `0005`) vía
+`POST /rest/v1/rpc/keep_alive` con la anon key, alojada en un cron externo
+(cron-job.org) que dispara cada 3 horas. El cron vive en servidores ajenos a la PC del
+desarrollador y no depende del auto-desactivado de los jobs programados de GitHub. El
+mecanismo anterior (workflow de Actions + tarea de Windows) se reemplaza por completo
+y se documenta en `docs/KEEP_ALIVE.md`.
 
-**Alternativas.** cron-job.org (más frecuente, configurable) — descartada por decisión
-de mantener todo dentro del repo.
+**Alternativas.** Pro ($25/mes) — nunca pausa y agrega backups, pero excede el costo
+de una herramienta interna; tareas locales solamente — dependían del equipo encendido
+y fallaban sin DNS (incidente 2026-09-24).
 
-**Consecuencia.** Proyecto siempre activo. Hay que vigilar el primer run y el límite
-de jobs programados de GitHub.
+**Consecuencia.** Actividad constante y barata (~8 consultas/día). Sigue siendo una
+mitigación operativa, no contractual: si el cron se detiene, la ventana de 7 días de
+baja actividad vuelve a correr.
 
 ## D07 — Ventas idempotentes con ID generado en el cliente
 
