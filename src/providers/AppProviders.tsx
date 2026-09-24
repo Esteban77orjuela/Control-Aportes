@@ -9,6 +9,7 @@ import { syncOfflineOperations } from '@/pwa/sync';
 import { setupNetworkListener } from '@/utils/offlineSync';
 import { Alert } from 'react-native';
 import { ConnectionBanner } from '@/components/ConnectionBanner';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { WebAlertProvider } from '@/components/WebAlert';
 import { registerSW } from '@/pwa/registerSW';
 import * as Sentry from '@sentry/react';
@@ -74,13 +75,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <WebAlertProvider>
-          <ConnectionBanner />
-          {children}
-        </WebAlertProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <WebAlertProvider>
+            <ConnectionBanner />
+            {children}
+          </WebAlertProvider>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

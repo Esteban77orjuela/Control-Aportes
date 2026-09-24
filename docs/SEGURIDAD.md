@@ -16,12 +16,19 @@
 
 ### Autenticación
 - Supabase Auth con JWT; sesión gestionada por `@supabase/supabase-js`
-- Registro con confirmación de correo (`confirmed_at` verificado antes de entrar)
+- **Registro por invitación**: un trigger sobre `auth.users` rechaza registros si el email no está en `public.signup_allowlist` (ver `docs/DECISIONES_TECNICAS.md` D08)
+- Confirmación de correo (`confirmed_at` verificado antes de entrar)
 - Rutas protegidas con `authGuard.ts`
 
 ### Firmas y datos personales
 - Las firmas digitales se suben a **Supabase Storage** (bucket `signatures`) y la base de datos guarda la ruta, no el binario
+- El bucket existe y la subida está restringida a usuarios autenticados (migración `0014`)
+- **Deuda**: la lectura se hace con `getPublicUrl()` (exige bucket público o URLs firmadas); pendiente decidir privacidad real por usuario (D09)
 - Datos personales (nombres, teléfonos, firmas) limitados por RLS al propietario de la sesión
+
+### Observabilidad
+- **Sentry** se inicializa si existe `EXPO_PUBLIC_SENTRY_DSN` (opcional en desarrollo, recomendado en producción)
+- **ErrorBoundary** envolviendo toda la app: captura errores de renderizado y los envía a Sentry sin tumbar la interfaz
 
 ### Dependencias
 - Dependabot activado (alertas automáticas)

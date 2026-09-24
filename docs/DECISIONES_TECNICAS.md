@@ -119,3 +119,39 @@ Misma estrategia para los `INSERT` de pagos y personas en la cola offline: un er
 
 **Consecuencia.** La red es un canal no confiable y el reintento ya no produce datos
 duplicados ni descuentos dobles.
+
+## D08 — Registro por invitación (allowlist)
+
+**Contexto.** La app expone `signUp` para cualquiera con un email válido. En una
+herramienta interna financiera, un registro abierto permite que extraños ocupen
+espacio y no aporta valor.
+
+**Decisión.** Migración `0013`: tabla `public.signup_allowlist` + trigger `BEFORE
+INSERT` sobre `auth.users` que rechaza el registro cuando el email no está en la
+lista. Si la tabla está vacía, el registro queda abierto (comportamiento de
+transición). El administrador agrega emails con un simple `insert`.
+
+**Alternativas.** `enable_signup = false` en Auth (cierra todo el registro, incluidos
+invitados por panel); un proxy externo (agrega infraestructura).
+
+**Consecuencia.** Solo usuarios invitados crean cuentas. La experiencia de registro
+falla con un mensaje claro si el email no fue invitado. Requiere aplicar `0013` en el
+proyecto y documentar cómo invitar (incluidos los correos de actuales
+administradores).
+
+## D09 — Firmas en Storage: bucket público vs. privado (decisión pendiente)
+
+**Contexto.** Las firmas se suben al bucket `signatures` y se muestran con
+`getPublicUrl()`, que solo funciona si el bucket es público. Con bucket público,
+cualquiera con la URL puede ver las firmas (los paths incluyen un componente
+aleatorio, mitigación débil).
+
+**Decisión (parcial).** La migración `0014` garantiza que el bucket exista y que la
+subida exija autenticación, sin modificar buckets ya creados. Queda **pendiente**:
+(a) decidir si el bucket debe ser privado y el front migrar a URLs firmadas con
+vencimiento, o (b) aceptar el modelo público actual por ser firmas de bajo valor.
+Además, los paths actuales (`payment/`, `youth_<uuid>/`) no distinguen al dueño;
+incluir el `user_id` en el path permitiría políticas RLS de Storage por propietario.
+
+**Consecuencia.** Mientras no se cierre, `0014` es un seguro para instalaciones
+nuevas y este documento fija la discusión para no olvidarla.
