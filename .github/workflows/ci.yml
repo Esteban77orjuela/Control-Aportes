@@ -59,3 +59,35 @@ jobs:
 
       - name: Compilar la PWA (expo export + workbox injectManifest)
         run: npm run pwa:build
+
+  deploy-netlify:
+    name: Deploy PWA a Netlify (producción)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [test-and-lint, build-web]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v5
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar la PWA con configuración de producción
+        run: npm run pwa:build
+        env:
+          APP_ENV: production
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Publicar en Netlify
+        run: npx @netlify/cli deploy --prod --dir=dist
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
