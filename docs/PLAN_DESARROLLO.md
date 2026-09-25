@@ -41,8 +41,8 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 
 ## Fase 6 — Testing
 - [x] Jest configurado
-- [x] Tests unitarios: validators, money, uuid, export, RetreatService (43 tests)
-- [x] Tests de integración: RetreatService con mocks (10 tests)
+- [x] Tests unitarios: validators, money, uuid, export, repositorios y sincronización offline
+- [x] Tests de integración: RetreatService con mocks (68 tests en 9 suites en total)
 - [ ] Pendiente: Tests unitarios para useCases
 - [ ] Pendiente: Tests E2E con Detox o Maestro
 - [ ] Pendiente: Alcanzar >70% cobertura
@@ -54,14 +54,13 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 - [ ] Pendiente: Rate limiting
 - [ ] Pendiente: Secret scanning
 
-## Fase 8 — Docker
-- [x] Crear Dockerfile para entorno de desarrollo
-- [x] .dockerignore para builds optimizados
+## Fase 8 — Docker (revisado en 1.2.0)
+- [x] Dockerfile y .dockerignore eliminados: la PWA web no requiere contenedor
 
 ## Fase 9 — CI/CD
 - [x] CI con GitHub Actions (lint + test + npm audit)
-- [x] Keep-alive automático de Supabase
-- [x] CD para despliegue automático de APK con EAS (manual o por tags)
+- [x] Keep-alive automático de Supabase (cron externo, ver docs/KEEP_ALIVE.md)
+- [x] CD de la PWA a Netlify desde CI (job deploy-netlify en push a main)
 - [ ] Pendiente: Análisis de calidad en CI (SonarQube)
 
 ## Fase 10 — Cloud
@@ -104,9 +103,9 @@ Estructura profesional SDLC para llevar el proyecto de MVP a producción enterpr
 - [ ] SonarQube o ESLint avanzado
 - [ ] Revisión y limpieza de código
 
-### Sprint 4 — DevOps
-- [ ] CD con EAS Build automático
-- [ ] Dockerfile
+### Sprint 4 — DevOps (revisado)
+- [x] CD con EAS Build: descartado (la app es PWA desde 1.2.0)
+- [x] Dockerfile: eliminado; el despliegue es la PWA en Netlify
 
 ### Sprint 5 — Observabilidad
 - [ ] Sentry

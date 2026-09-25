@@ -12,7 +12,7 @@ Llevar el control de aportes económicos mensuales de los miembros de una congre
 Digitalizar por completo la gestión financiera de la congregación, eliminando planillas en papel y Excel, con respaldo en la nube (Supabase) y funcionalidad offline.
 
 ## Valor que entrega
-- App móvil (Android) siempre disponible incluso sin internet
+- PWA instalable (web) disponible incluso sin internet
 - Sincronización automática cuando hay conexión
 - Reportes exportables a Excel
 - Dashboard con estadísticas en tiempo real
